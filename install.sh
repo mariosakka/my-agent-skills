@@ -6,15 +6,15 @@
 #
 # WHAT THIS SCRIPT DOES:
 #   Clones (or updates) a GitHub repo containing AI agent
-#   skills into ~/.my-skills/, then symlinks each skill folder
+#   skills into ~/.my-agent-skills/, then symlinks each skill folder
 #   into the skills directory for every configured AI platform
 #   (Claude Code, Gemini CLI, Copilot CLI, etc.).
 #
 # HOW TO RUN (private repo — requires gh CLI authenticated):
-#   gh repo clone mariosakka/my-skills ~/.my-skills && bash ~/.my-skills/install.sh
+#   gh repo clone mariosakka/my-agent-skills ~/.my-agent-skills && bash ~/.my-agent-skills/install.sh
 #
 #   Re-run to update (pulls latest and re-links):
-#   bash ~/.my-skills/install.sh
+#   bash ~/.my-agent-skills/install.sh
 #
 #   Custom repo:
 #   SKILLS_REPO=git@github.com:you/your-skills.git bash install.sh
@@ -38,8 +38,8 @@
 set -euo pipefail
 
 # ── Configuration ────────────────────────────────────────────
-SKILLS_REPO="${SKILLS_REPO:-git@github.com:mariosakka/my-skills.git}"
-INSTALL_DIR="${HOME}/.my-skills"
+SKILLS_REPO="${SKILLS_REPO:-git@github.com:mariosakka/my-agent-skills.git}"
+INSTALL_DIR="${HOME}/.my-agent-skills"
 
 # Platform entries: "label:target_directory"
 # Add or remove entries here to control which agents get the skills.
