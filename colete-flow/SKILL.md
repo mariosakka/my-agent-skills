@@ -186,6 +186,22 @@ in #zdev-deploy). After the deploy announcement, I help Mario run the PR's
 reopen the issue and write the 3-line regression note (what happened / why / what
 we do next).
 
+## Doing a review (when Mario is assigned as reviewer)
+
+1. **Acknowledge immediately** — the bot replaces you if you give no sign within
+   one working day of being assigned. As soon as you're assigned, leave a comment
+   on the PR (e.g. "ma uit") and optionally post in #zdev-general via the
+   `slack-work-communication` skill. That comment is your clock-stop.
+2. **If you forgot and the bot already moved on** — there is no self-reassign
+   command. Ask Alex or the PR author to re-request a review from you on GitHub.
+3. **If you're the wrong person** — reply `/reassign <motiv>` on the PR; passes
+   immediately to the next eligible reviewer, no need to wait out the day.
+4. **Do the review** — read and understand the diff. You don't have to run it
+   locally unless the logic is too complex to judge from code alone; if the PR has
+   "how to test" steps and the change is risky, those steps apply to you too.
+5. **Approve** → automation fires `ready-to-merge` and posts to #zdev-pulse —
+   nothing manual needed after that.
+
 ## Proactive guardrails (I flag when Mario is about to break the doc)
 
 I speak up if:
