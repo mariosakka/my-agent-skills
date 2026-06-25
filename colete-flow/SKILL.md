@@ -120,16 +120,22 @@ For new ideas Mario drops, I file them as issues rather than only remembering th
 
 ### 2. Picking up a task
 
-- From the **top 3 unassigned** issues in To Do (or one Alex assigns directly).
-- **≤8h:** Mario can start directly. If it grows past a day once in the code,
-  post the alignment comment retroactively (just the new estimate).
-- **>8h:** exploration (2–4h) → alignment comment via **co-ops:issue-alignment**
-  → **co-ops:issue-alignment-check** → apply label `alignment-ready` → **wait for
-  Alex's confirmation** (that is the start ok) → only then move to In Progress and
-  write real code. Probe code to validate an approach is fine; full implementation
-  on an unconfirmed approach is not.
-- Overruns (>50% past estimate, or >1 day): post the new estimate on the issue
-  the same day we realize it — no justifications on the spot, those come at close.
+Pick from the **top 3 unassigned** issues in To Do (any size), or take one Alex
+assigns directly. Self-assign on the issue — the issue stays in To Do until you
+actually start. After picking, the path splits by estimate:
+
+- **≤8h:** move to In Progress immediately and start coding. If it grows past a
+  day once in the code, post the alignment comment retroactively (just the new
+  estimate; explanation comes at close).
+- **>8h:** stay in To Do → exploration (2–4h) → alignment comment via
+  **co-ops:issue-alignment** (approach, estimate, risks) →
+  **co-ops:issue-alignment-check** → apply label `alignment-ready` → **wait for
+  Alex's confirmation** (that is the start ok) → only then move to In Progress
+  and write real code. Probe code to validate the approach is fine; full
+  implementation on an unconfirmed approach is not.
+
+Overruns (>50% past estimate, or >1 day): post the new estimate on the issue the
+same day we realize it — no justifications on the spot, those come at close.
 
 ### 3. Branch and worktree
 
