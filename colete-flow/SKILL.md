@@ -46,15 +46,15 @@ The source of truth is the **GitHub issue** and the **GitHub Projects board**
 
 ## Hard rules (never violate)
 
-- **I NEVER open a PR.** When the change is tested locally and the AI review is
-  clean, I tell Mario "gata de PR"; **Mario opens the draft PR himself** (starts
-  as draft, auto-linked to the issue). I then run the AI review loop on that
-  draft.
+- **I open PRs using `co-pr`.** When the change is tested locally and
+  CI/linting is clean, I run `co-pr` to open the draft PR from the shared
+  account (`PRCreatorNR1`). `co-pr` detects the current folder to pick the
+  right repo and asks for the issue number. I then assign the issue to
+  `mariosakka` and run the AI review loop on the draft.
 - **I do NOT mark a PR "Ready for review."** That is Mario's gate — it triggers
   human-reviewer assignment. I only get the draft clean and tell him it's ready.
 - **Commits/push: only when Mario asks, or inside a confirmed AI-review fix
-  cycle.** The `gh` CLI is logged in as `PRCreatorNR1` (the shared PR account).
-  I never push on my own initiative.
+  cycle.** I never push on my own initiative.
 - **`approved` (which boards the issue) only on a stated Alex ok — never on my
   own judgment.** I apply `approved` + leave an attribution comment ("ok de la
   Alex, discutat in standup") **only when Mario tells me the ok exists.**
@@ -84,10 +84,21 @@ The source of truth is the **GitHub issue** and the **GitHub Projects board**
   as a new message (not a thread reply). All tasks as `#N titlu`.
 - **#zdev-deploy** — production deploy announcements + post-deploy verification.
 
-## Tooling — co-ops skills
+## Tooling — co-ops + co-pr skills
 
-Install once: `/plugin marketplace add Colete-Online/ai-tooling` then
-`/plugin install co-ops@ai-tooling`.
+Install once:
+```
+/plugin marketplace add Colete-Online/ai-tooling
+/plugin install co-ops@ai-tooling
+/plugin install co-pr@ai-tooling
+/co-pr:install
+```
+Then in a **new terminal** (required after the commands above):
+```
+co-pr login   # paste the PRCreatorNR1 fine-grained PAT when prompted
+co-pr whoami  # verify correct account
+```
+Token naming convention: `co-pr-mario` (so the team knows whose token it is).
 
 - **co-ops:issue-creation** — file a structured issue (team template + machine-read
   `Estimation:` line). Never boards, approves, or assigns.
@@ -95,6 +106,9 @@ Install once: `/plugin marketplace add Colete-Online/ai-tooling` then
 - **co-ops:issue-alignment-check** — self-check the alignment comment before
   labeling `alignment-ready`.
 - **co-ops:pr-merge-check** — on a draft PR: "is it ready to mark Ready for review?"
+- **co-pr** — opens a draft PR from the `PRCreatorNR1` shared account. Detects
+  repo from current folder, asks for (or finds) the linked issue. I call this;
+  Mario does not need to open PRs manually.
 
 ## The flow
 
@@ -139,11 +153,10 @@ unrelated areas. `node_modules`, env files, and generated config are per-worktre
 
 ### 5. PR + AI review loop (I drive; I don't open or "ready" the PR)
 
-1. When the change is **tested locally** and CI/linting is clean, I tell Mario
-   "gata de PR"; he opens the **draft PR** from the `PRCreatorNR1` shared account
-   and confirms it's open. I then assign the issue to `mariosakka` (his personal
-   account) — this is mandatory since the PR comes from the shared account; the
-   issue assignee is how the team identifies the real author.
+1. When the change is **tested locally** and CI/linting is clean, I run `co-pr`
+   to open the **draft PR** from the `PRCreatorNR1` shared account, linked to the
+   issue. I then assign the issue to `mariosakka` — mandatory since PRs come from
+   the shared account; the issue assignee is how the team identifies the real author.
 2. On the draft I run the AI review: `/review`, `/simplify`,
    and **co-ops:pr-merge-check**. Issue stays In Progress; no human yet.
 3. I read every review comment and classify each:
@@ -180,7 +193,7 @@ I speak up if:
 
 ## Quick reference
 
-- GitHub: `gh` CLI logged in as `PRCreatorNR1` (shared PR account, ssh).
+- PR creation: `co-pr` tool (shared account `PRCreatorNR1`, fine-grained PAT).
   Mario's personal account: `mariosakka` — used for issue assignment only.
 - Issues / alignment / PR-readiness: the **co-ops** skills.
 - Slack messages: the **slack-work-communication** skill — always draft, show,
