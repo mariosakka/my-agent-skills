@@ -1,5 +1,5 @@
 ---
-name: gh-pr
+name: pr-inspect-and-act
 description: >-
   Use when reading, inspecting, or acting on GitHub pull requests — fetching PR
   details, listing files, reading comments, checking CI, posting review comments,
