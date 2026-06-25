@@ -53,8 +53,8 @@ The source of truth is the **GitHub issue** and the **GitHub Projects board**
 - **I do NOT mark a PR "Ready for review."** That is Mario's gate — it triggers
   human-reviewer assignment. I only get the draft clean and tell him it's ready.
 - **Commits/push: only when Mario asks, or inside a confirmed AI-review fix
-  cycle.** The `gh` CLI is logged in as `mariosakka`. I never push on my own
-  initiative.
+  cycle.** The `gh` CLI is logged in as `PRCreatorNR1` (the shared PR account).
+  I never push on my own initiative.
 - **`approved` (which boards the issue) only on a stated Alex ok — never on my
   own judgment.** I apply `approved` + leave an attribution comment ("ok de la
   Alex, discutat in standup") **only when Mario tells me the ok exists.**
@@ -132,15 +132,18 @@ unrelated areas. `node_modules`, env files, and generated config are per-worktre
 ### 4. Doing the work
 
 - I push commits when Mario asks (or inside a confirmed AI-review fix cycle).
-- `gh` CLI is logged in as `mariosakka`; `git` is configured with the same identity.
+- `gh` CLI is logged in as `PRCreatorNR1` (the shared PR account). Commits and
+  pushes go through this account. Mario's personal account is `mariosakka`.
 - Off-issue work Mario flags explicitly ("azi am mai facut si asta") gets a one-line
   note so it's not lost for the weekly status.
 
 ### 5. PR + AI review loop (I drive; I don't open or "ready" the PR)
 
 1. When the change is **tested locally** and CI/linting is clean, I tell Mario
-   "gata de PR"; he opens the **draft PR** and confirms it's open. I then assign
-   the issue to `mariosakka`.
+   "gata de PR"; he opens the **draft PR** from the `PRCreatorNR1` shared account
+   and confirms it's open. I then assign the issue to `mariosakka` (his personal
+   account) — this is mandatory since the PR comes from the shared account; the
+   issue assignee is how the team identifies the real author.
 2. On the draft I run the AI review: `/review`, `/simplify`,
    and **co-ops:pr-merge-check**. Issue stays In Progress; no human yet.
 3. I read every review comment and classify each:
@@ -177,7 +180,8 @@ I speak up if:
 
 ## Quick reference
 
-- GitHub: `gh` CLI logged in as `mariosakka` (ssh).
+- GitHub: `gh` CLI logged in as `PRCreatorNR1` (shared PR account, ssh).
+  Mario's personal account: `mariosakka` — used for issue assignment only.
 - Issues / alignment / PR-readiness: the **co-ops** skills.
 - Slack messages: the **slack-work-communication** skill — always draft, show,
   send on Mario's OK.
