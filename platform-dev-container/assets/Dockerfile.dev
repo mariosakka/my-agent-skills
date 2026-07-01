@@ -1,0 +1,59 @@
+# Dockerfile.dev — fully containerized dev environment for the colete-online server.
+# Throwaway dev tooling (one per worktree). NOT the production image (see Dockerfile).
+#
+# Design:
+#  - Runs as the unprivileged `node` user (uid 1000 == host user), so anything
+#    written into the bind-mounted worktree stays owned by you, not root.
+#  - Mirrors the prod runtime deps (chromium/ghostscript/java for puppeteer &
+#    reports) and adds dev tooling: tmux, git, the Claude Code CLI, the docker
+#    CLI (to drive the repo's local.sh against the host daemon) and gh (seeding).
+#  - Fully parameterized via env (INSTANCE, DEV_NET, FIREWALL, …) so this exact
+#    file is copied verbatim into every stack; only docker-compose.dev.yml varies.
+FROM node:24-alpine
+
+ENV TZ=Europe/Bucharest
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime 2>/dev/null; echo $TZ > /etc/timezone
+
+# Runtime libs (mirrored from prod Dockerfile) + dev tooling.
+RUN apk add --no-cache \
+      bash git tmux unzip openssl curl jq ca-certificates su-exec iptables python3 \
+      docker-cli github-cli \
+      chromium nss freetype harfbuzz ttf-freefont \
+      ghostscript libxslt openjdk11-jre
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    NODE_OPTIONS=--max-old-space-size=8192
+
+# Claude Code CLI (run it inside the container, e.g. via the `dev` launcher / tmux).
+RUN npm install -g @anthropic-ai/claude-code
+
+# Playwright (CLI + @playwright/test). Alpine can't run Playwright's own browser
+# builds, so skip the download and drive the system Chromium installed above.
+# See the playwright-cli skill; launch with executablePath=/usr/bin/chromium-browser
+# + args [--no-sandbox,--disable-dev-shm-usage].
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PW_CHROMIUM_PATH=/usr/bin/chromium-browser
+RUN npm install -g playwright @playwright/test
+
+# `dev` launcher: forces UTF-8 + truecolor + `tmux -u`. On Alpine/musl tmux needs -u
+# or it renders Claude's ⏺/⎿ glyphs as the `_` ASCII fallback; TERM=xterm-256color +
+# COLORTERM=truecolor let Claude emit muted 24-bit diff colors instead of bright ANSI.
+RUN printf '#!/usr/bin/env bash\nexport LANG=C.UTF-8 LC_ALL=C.UTF-8 TERM=xterm-256color COLORTERM=truecolor\ncd /app/server\nexec tmux -u new -As dev claude\n' > /usr/local/bin/dev \
+    && chmod +x /usr/local/bin/dev
+
+# Pre-create the named-volume mountpoints owned by `node` so the empty volumes
+# inherit node ownership on first mount (otherwise they default to root and
+# `npm ci` / prisma generate fail with EACCES).
+RUN mkdir -p \
+      /app/server/node_modules \
+      /app/server/src/prisma/cbox/generated \
+      /app/server/src/prisma/delivery/generated \
+      /app/server/src/prisma/mobile_app/generated \
+      /app/server/src/prisma/invoicing_system/generated \
+      /app/server/src/prisma-types \
+      /app/server/dist \
+      /dev-state \
+    && chown -R node:node /app /dev-state
+
+USER node
+WORKDIR /app/server
