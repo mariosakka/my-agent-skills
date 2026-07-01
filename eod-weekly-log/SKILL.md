@@ -19,7 +19,7 @@ version: 1
 
 # eod-weekly-log
 
-Manages two persistent work logs via shell scripts. Use `~/.desk/daily-log` for EOD, `~/.desk/weekly-log` for the Friday weekly message.
+Manages two persistent work logs via shell scripts. Use `~/.desk/daily-log` for EOD, `~/.desk/weekly-log` for the Friday weekly message. Scripts live in `~/.my-agent-skills/eod-weekly-log/` (symlinked into `~/.desk/`). JSON data is stored in `~/.local/share/desk-logs/`.
 
 ## Script interface
 
@@ -50,7 +50,7 @@ Both scripts have an identical interface:
 
 ## Rules
 
-- NEVER edit `~/.desk/daily-log.json` or `~/.desk/weekly-log.json` directly
+- NEVER edit `~/.local/share/desk-logs/daily-log.json` or `~/.local/share/desk-logs/weekly-log.json` directly
 - Always run `show` before sending and present the output to the user for confirmation
 - Run `~/.desk/daily-log clear` after the EOD message is confirmed sent
 - Run `~/.desk/weekly-log clear` after the weekly message is confirmed sent

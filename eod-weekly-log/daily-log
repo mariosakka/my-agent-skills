@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+import json, sys, os
+
+LOG_FILE = os.path.expanduser('~/.local/share/desk-logs/daily-log.json')
+SECTIONS = {'focus', 'blockers', 'help'}
+
+def load():
+    if not os.path.exists(LOG_FILE):
+        return {'focus': [], 'blockers': [], 'help': []}
+    with open(LOG_FILE) as f:
+        return json.load(f)
+
+def save(data):
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, 'w') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+def cmd_add(section, text):
+    if section not in SECTIONS:
+        sys.exit(f'Unknown section: {section}. Use: focus | blockers | help')
+    data = load()
+    data[section].append(text)
+    save(data)
+
+def cmd_remove(section, index):
+    if section not in SECTIONS:
+        sys.exit(f'Unknown section: {section}. Use: focus | blockers | help')
+    data = load()
+    idx = int(index) - 1
+    if idx < 0 or idx >= len(data[section]):
+        sys.exit(f'Index {index} out of range (1–{len(data[section])})')
+    data[section].pop(idx)
+    save(data)
+
+def cmd_show():
+    data = load()
+    lines = []
+    lines.append(':dart: Focus')
+    lines += [f'• {i}' for i in data['focus']] or ['nimic']
+    lines.append('')
+    lines.append(':construction: Blocaje')
+    lines += [f'• {i}' for i in data['blockers']] or ['nimic']
+    lines.append('')
+    lines.append(':raising_hand: Ajutor necesar')
+    lines += [f'• {i}' for i in data['help']] or ['nimic']
+    print('\n'.join(lines))
+
+def cmd_clear():
+    save({'focus': [], 'blockers': [], 'help': []})
+
+args = sys.argv[1:]
+if not args:
+    sys.exit('Usage: daily-log <add|remove|show|clear> ...')
+cmd = args[0]
+if cmd == 'add':
+    if len(args) < 3:
+        sys.exit('Usage: daily-log add <section> "<text>"')
+    cmd_add(args[1], ' '.join(args[2:]))
+elif cmd == 'remove':
+    if len(args) < 3:
+        sys.exit('Usage: daily-log remove <section> <index>')
+    cmd_remove(args[1], args[2])
+elif cmd == 'show':
+    cmd_show()
+elif cmd == 'clear':
+    cmd_clear()
+else:
+    sys.exit(f'Unknown command: {cmd}')
