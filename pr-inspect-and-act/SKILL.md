@@ -127,3 +127,25 @@ gh pr edit NUMBER --repo OWNER/REPO --remove-label "label-name"
 | woocommerce-plugin | `Colete-Online/woocommerce-plugin` |
 | prestashop-module | `Colete-Online/prestashop-module` |
 | ai-tooling | `Colete-Online/ai-tooling` |
+
+## Creating desk pages for PRs
+
+When asked to create a desk page for a PR, always fetch the PR and its source issue in parallel first, then create the page via `mcp__vscode-desk__create_page`. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
+
+**Required sections (in this order):**
+
+1. **Why this existed** (`icon: 🔍`) — Explain the backstory: what was broken or missing, what prior PRs or issues led here, and why the previous behaviour was wrong. Include a callout if there's a non-obvious root cause (e.g. "pasted images become base64 URIs"). Link to related PRs and issues.
+
+2. **What changed** (`icon: ✏️`) — A table of every changed file with a one-line description of what it does. Add a tip callout at the bottom with `+lines / -lines` and a one-line scope summary (client-only, no DB migrations, etc.).
+
+3. **How it flows** (`icon: ⚡`) — A `.flow` diagram showing the end-to-end sequence: trigger → request → server response → client mapping → user-visible result.
+
+4. **Source pointers** (`icon: 📂`) — A table mapping "what" to the exact file path, covering both server-side definitions and client-side entry points. Always include the server-side error code file if relevant.
+
+5. **What's still open** (`icon: 🔮`) — Only include this section if the source issue is still open or if the PR is a partial fix. List remaining acceptance criteria and link back to the issue.
+
+**Naming convention:** `pr-{NUMBER}-{kebab-slug}.desk`
+
+**Eyebrow:** `Fix · {Layer} · {Feature}` (e.g. `Fix · Client · Tickets`)
+
+**Subtitle:** One sentence — what the PR does and the error code or mechanism it handles.
