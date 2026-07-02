@@ -138,6 +138,22 @@ gh pr edit NUMBER --repo OWNER/REPO --remove-label "label-name"
 | prestashop-module | `Colete-Online/prestashop-module` |
 | ai-tooling | `Colete-Online/ai-tooling` |
 
+## Reading existing desk pages
+
+There is **no `get_page` tool** in the MCP server. The only page tools are `list_pages`, `create_page`, `update_page`, and `delete_page`.
+
+To read the content of an existing page, use the Read tool directly on the file:
+
+```
+# Global pages
+~/.desk/global/pages/<name>.desk
+
+# Workspace pages
+~/.desk/workspaces/<workspace-name>/pages/<name>.desk
+```
+
+Use `list_pages` (with `scope: "global"` or `scope: "workspace"`) to discover page names first, then read the file at the path above.
+
 ## After inspecting any PR — always create a desk page
 
 After reading or inspecting a PR, **always create a desk page for it without waiting to be asked.** Fetch the PR and its source issue in parallel first, then create the page via `mcp__vscode-desk__create_page`. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
