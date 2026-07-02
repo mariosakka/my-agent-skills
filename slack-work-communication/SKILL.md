@@ -11,6 +11,15 @@ description: >
 
 # Slack Work Communication
 
+## Channel IDs
+
+Channel IDs are stored in `config/channels.sh` — source it rather than hardcoding:
+
+```bash
+source ~/.my-agent-skills/slack-work-communication/config/channels.sh
+# Now use: $SLACK_ZDEV_STATUS for #zdev-status
+```
+
 ## Overview
 
 Classify the user's work situation, compose the correct Slack messages per team standards, confirm with the user, then send via Slack MCP.

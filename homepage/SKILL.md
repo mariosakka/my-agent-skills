@@ -15,6 +15,25 @@ Always **read the file first** before any edit.
 
 ---
 
+## Scripts
+
+Run these when adding or removing cards to catch structural regressions immediately.
+
+| Script | When to run | What it does |
+|---|---|---|
+| `scripts/list-cards.sh` | Before adding a card | Prints all existing guide and bookmark slugs so you don't collide |
+| `scripts/validate.sh` | After any edit | Confirms `#guides-grid` / `#bookmarks-grid` exist, no duplicate slugs, no absolute hrefs |
+
+```bash
+# Check existing slugs
+~/.my-agent-skills/homepage/scripts/list-cards.sh
+
+# Validate after edit
+~/.my-agent-skills/homepage/scripts/validate.sh
+```
+
+---
+
 ## Card Templates
 
 ### Guide card

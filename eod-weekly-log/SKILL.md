@@ -58,9 +58,10 @@ Both scripts have an identical interface:
 ## EOD flow
 
 1. Run `~/.desk/daily-log show`
-2. Present output to user for review
-3. Invoke `slack-work-communication` skill with the log output as the EOD message body
-4. After user confirms send: run `~/.desk/daily-log clear`
+2. **Before sending:** confirm the log is non-empty — if output is blank or whitespace only, ask the user what to include rather than sending a blank message.
+3. Present output to user for review
+4. Invoke `slack-work-communication` skill with the log output as the EOD message body
+5. After user confirms send: run `~/.desk/daily-log clear`
 
 ## Weekly flow
 

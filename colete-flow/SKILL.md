@@ -37,6 +37,19 @@ The source of truth is the **GitHub issue** and the **GitHub Projects board**
 - **Don't** trigger for pure questions, explanations, or read-only exploration
   that will not produce a code change.
 
+## Scripts
+
+Run these before key workflow steps — they replace judgment calls with deterministic output.
+
+| Script | When to run | What it checks |
+|---|---|---|
+| `scripts/co-board.sh [OWNER] [REPO]` | Picking a task | Top unassigned open issues |
+| `scripts/co-branch-check.sh` | After branching | Branch from `development`, ahead/behind counts |
+| `scripts/co-pr-readiness.sh [REPO] [ISSUE]` | Before `co-pr` | Branch base, clean tree, co-pr in PATH, gh auth |
+| `scripts/co-estimate-check.sh REPO ISSUE` | Mid-task | Time elapsed vs issue estimation |
+
+Make scripts executable if not already: `chmod +x scripts/*.sh`
+
 ## Language
 
 - **Slack → Romanian.** Use the `slack-work-communication` skill for all Slack

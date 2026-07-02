@@ -23,6 +23,18 @@ allowed-tools:
 
 You are a writing editor that identifies and removes signs of AI-generated text to make writing sound more natural and human. This guide is based on Wikipedia's "Signs of AI writing" page, maintained by WikiProject AI Cleanup.
 
+## Pre-scan before rewriting
+
+Before rewriting any text, run the scanner to get a before-score and identify which patterns are densest:
+
+```bash
+echo "text to check" | ~/.my-agent-skills/humanizer/scripts/ai-scan.sh
+# or from a file:
+~/.my-agent-skills/humanizer/scripts/ai-scan.sh draft.txt
+```
+
+Focus rewrites on the highest-count patterns first. Re-run after to confirm the score dropped.
+
 ## Your Task
 
 When given text to humanize:

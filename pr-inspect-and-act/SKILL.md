@@ -14,6 +14,16 @@ version: 1
 All commands use the `gh` CLI. Always pass `--repo OWNER/REPO` explicitly when
 not already inside that repo's working directory.
 
+## Quick start — snapshot a PR
+
+Instead of running individual `gh` commands, use:
+
+```bash
+~/.my-agent-skills/pr-inspect-and-act/scripts/pr-snapshot.sh OWNER/REPO NUMBER
+```
+
+This fires all requests in parallel and prints: summary, changed files with line counts, inline review comments, and issue-level comments. Use the individual commands below only when you need specific slices.
+
 ## Find PRs
 
 ```bash
