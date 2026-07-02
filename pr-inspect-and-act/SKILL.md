@@ -154,6 +154,17 @@ To read the content of an existing page, use the Read tool directly on the file:
 
 Use `list_pages` (with `scope: "global"` or `scope: "workspace"`) to discover page names first, then read the file at the path above.
 
+## After inspecting any PR — explain the test plan first
+
+Before creating the desk page or doing anything else, **tell the user how you plan to test the changes and why.** Cover:
+
+1. **What changed** — which files/layers are affected (client only, server only, both, DB migrations, etc.)
+2. **What you will test** — the specific scenarios you'll exercise: happy path, the edge case the PR fixes, any regression risks in adjacent code
+3. **How you will test it** — manual steps in the browser, running a specific test suite, calling an endpoint with curl, checking a specific UI flow, etc.
+4. **Why that coverage is enough** — briefly justify why these tests would catch a regression if the fix broke something
+
+Keep it short — a few bullet points, not a wall of text. The goal is for the user to be able to say "yes that makes sense" or "also check X" before you start.
+
 ## After inspecting any PR — always create a desk page
 
 After reading or inspecting a PR, **always create a desk page for it without waiting to be asked.** Fetch the PR and its source issue in parallel first, then create the page via `mcp__vscode-desk__create_page`. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
