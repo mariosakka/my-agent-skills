@@ -128,9 +128,9 @@ gh pr edit NUMBER --repo OWNER/REPO --remove-label "label-name"
 | prestashop-module | `Colete-Online/prestashop-module` |
 | ai-tooling | `Colete-Online/ai-tooling` |
 
-## Creating desk pages for PRs
+## After inspecting any PR — always create a desk page
 
-When asked to create a desk page for a PR, always fetch the PR and its source issue in parallel first, then create the page via `mcp__vscode-desk__create_page`. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
+After reading or inspecting a PR, **always create a desk page for it without waiting to be asked.** Fetch the PR and its source issue in parallel first, then create the page via `mcp__vscode-desk__create_page`. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
 
 **Required sections (in this order):**
 
