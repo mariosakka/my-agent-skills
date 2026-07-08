@@ -38,10 +38,12 @@ Activate when the user describes any of these:
 ## Process
 
 1. **Classify** — identify situation type from the routing table below
-2. **Ask if missing** — if a required detail is absent, ask before drafting (see Missing Details)
-3. **Draft** — compose all messages using the templates
-4. **Confirm** — show all drafts in one block, ask "Trimit? (da / nu / modifică)"
-5. **Send** — use Slack MCP tools after user approves
+2. **Read log** — for EOD or weekly, run the appropriate log script to get content (see Log Integration)
+3. **Ask if missing** — if a required detail is still absent after reading the log, ask (see Missing Details)
+4. **Draft** — compose all messages using the templates
+5. **Confirm** — show all drafts in one block, ask "Trimit? (da / nu / modifică)"
+6. **Send** — use Slack MCP tools after user approves
+7. **Clear log** — after confirmed send, clear the appropriate log (see Log Integration)
 
 ## Channel Routing
 
@@ -57,12 +59,45 @@ Activate when the user describes any of these:
 | Deploy | #zdev-general | No |
 | Part-time schedule | #zdev-status | No |
 
+## Log Integration
+
+For EOD and weekly situations, always read from the log scripts before drafting — do not ask the user for content if the log is non-empty.
+
+| Situation | Script | Clear after send |
+|---|---|---|
+| EOD | `~/.desk/daily-log show` | `~/.desk/daily-log clear` |
+| Weekly | `~/.desk/weekly-log show` | `~/.desk/weekly-log clear` |
+
+**Reading the log:**
+```bash
+~/.desk/daily-log show   # for EOD
+~/.desk/weekly-log show  # for weekly
+```
+
+If the output is blank or contains only whitespace, fall back to asking the user what to include.
+
+**Using the log output:**
+- The log output is already formatted for Slack (emoji headers, bullet points).
+- Use it as the full message body — do not summarise or shorten it.
+- Prepend `Inchid.` on its own line before the log output for EOD messages.
+
+**Clearing after send:**
+Run the clear command only after the user confirms with "da" and the message has been sent successfully:
+```bash
+~/.desk/daily-log clear   # after EOD sent
+~/.desk/weekly-log clear  # after weekly sent
+```
+
 ## Message Templates
 
 **SOD:** `Salut, sunt pe [task] azi`
 
-**EOD:** `Inchid. Am terminat [X] / maine continui pe [Y]`
-- If resuming same day: `Inchid momentan, mai revin diseara. Am terminat [X].`
+**EOD:**
+```
+Inchid.
+[full output of ~/.desk/daily-log show]
+```
+- If resuming same day: prepend `Inchid momentan, mai revin diseara.` instead of `Inchid.`
 
 **Late arrival:** `Vin dupa [ora]`
 
@@ -132,7 +167,8 @@ For DM to Alex:
 ## Missing Details
 
 Ask before drafting if the required info is absent:
-- **SOD / EOD**: no task mentioned → ask "Pe ce task esti / ai lucrat?"
+- **SOD**: no task mentioned → ask "Pe ce task esti azi?"
+- **EOD / Weekly**: log is empty → ask "Ce ai lucrat? (logul e gol)"
 - **Any departure**: no time given → ask "La ce ora pleci?"
 - **Long break**: no times given → ask "Intre ce ore e pauza?"
 
