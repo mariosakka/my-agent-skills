@@ -76,10 +76,20 @@ For EOD and weekly situations, always read from the log scripts before drafting 
 
 If the output is blank or contains only whitespace, fall back to asking the user what to include.
 
-**Using the log output:**
-- The log output is already formatted for Slack (emoji headers, bullet points).
-- Use it as the full message body — do not summarise or shorten it.
-- Prepend `Inchid.` on its own line before the log output for EOD messages.
+**Using the log output — EOD:**
+- Extract only the focus bullet lines (lines starting with `•` between `:dart: Focus` and `:construction: Blocaje`).
+- Do NOT include section headers (`:dart:`, `:construction:`, `:raising_hand:`) or the blocaje/ajutor sections.
+- Format as:
+  ```
+  Inchid.
+  • item 1
+  • item 2
+  ...
+  ```
+
+**Using the log output — Weekly:**
+- Use the full output as-is (all sections: focus, blocaje, ajutor necesar).
+- Do not prepend anything extra.
 
 **Clearing after send:**
 Run the clear command only after the user confirms with "da" and the message has been sent successfully:
@@ -95,9 +105,17 @@ Run the clear command only after the user confirms with "da" and the message has
 **EOD:**
 ```
 Inchid.
-[full output of ~/.desk/daily-log show]
+• [focus item 1]
+• [focus item 2]
+...
 ```
-- If resuming same day: prepend `Inchid momentan, mai revin diseara.` instead of `Inchid.`
+Only focus items — no section headers, no blocaje, no ajutor necesar.
+- If resuming same day: use `Inchid momentan, mai revin diseara.` instead of `Inchid.`
+
+**Weekly:**
+```
+[full output of ~/.desk/weekly-log show — all sections as-is]
+```
 
 **Late arrival:** `Vin dupa [ora]`
 

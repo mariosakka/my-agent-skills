@@ -40,6 +40,16 @@ Both scripts have an identical interface:
 | Something blocking progress | `blockers` |
 | Help needed from someone | `help` |
 
+## Adding focus items — always ask for links
+
+When adding a **focus** item (work done, PR reviewed, task completed), always ask for an associated link (PR, Issue, etc.) before calling the script:
+
+- "Ai un link asociat? (PR, Issue, etc.)"
+- If yes: append the link at the end of the text — e.g. `"Reviewed PR #123 — fixed auth bug https://github.com/org/repo/pull/123"`
+- If no: add the text as-is
+
+Do not ask for links on `blockers` or `help` items.
+
 ## Which script to use
 
 | Situation | Script |
