@@ -32,6 +32,10 @@ Both scripts have an identical interface:
 
 (Replace `daily-log` with `weekly-log` for the weekly log.)
 
+## Language — Romanian only
+
+All log entry text (focus, blockers, help) must be written in **Romanian, no diacritics** — this matches how the logs get read out in Slack. Never write entries in English; if the user describes work in English, translate it into Romanian before calling `add`. Links, PR/issue numbers, and technical identifiers (file paths, function names) stay as-is — only the surrounding prose is Romanian.
+
 ## Section mapping
 
 | User describes | Section arg |
@@ -40,15 +44,15 @@ Both scripts have an identical interface:
 | Something blocking progress | `blockers` |
 | Help needed from someone | `help` |
 
-## Adding focus items — always ask for links
+## Adding focus items — links are mandatory whenever one exists
 
-When adding a **focus** item (work done, PR reviewed, task completed), always ask for an associated link (PR, Issue, etc.) before calling the script:
+Every **focus** item that references a PR, issue, or commit must include its link. This is not optional — a focus entry naming a PR/issue number without the matching URL is incomplete.
 
-- "Ai un link asociat? (PR, Issue, etc.)"
-- If yes: append the link at the end of the text — e.g. `"Reviewed PR #123 — fixed auth bug https://github.com/org/repo/pull/123"`
-- If no: add the text as-is
+- If the user gives a PR/issue number without a link, look it up yourself first (e.g. `gh pr view <N> --repo <owner>/<repo> --json url -q .url` / `gh issue view <N> ...`) before adding the entry — don't just ask the user for it.
+- If you can't resolve a link automatically (wrong repo, ambiguous number, or genuinely no PR/issue/commit behind the item — e.g. "research pe partea de retururi"), ask: "Ai un link asociat? (PR, Issue, etc.)" — and if there truly isn't one, add the text as-is without a link.
+- Append the link at the end of the text — e.g. `"Reviewed PR #123 — fixed auth bug https://github.com/org/repo/pull/123"`. If an entry references more than one PR/issue, append all relevant links.
 
-Do not ask for links on `blockers` or `help` items.
+Do not ask for links on `blockers` or `help` items (they normally don't reference a PR/issue).
 
 ## Which script to use
 
