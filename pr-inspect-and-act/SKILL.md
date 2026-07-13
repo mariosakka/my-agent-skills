@@ -14,15 +14,48 @@ version: 1
 All commands use the `gh` CLI. Always pass `--repo OWNER/REPO` explicitly when
 not already inside that repo's working directory.
 
+## Before inspecting code — read the issue, then the PR body + comments
+
+**Always do this first, before reading the diff or touching any code.** Skipping
+it means missing context another reviewer (human or bot) already surfaced,
+duplicating work someone already did (e.g. re-running a manual test that a
+self-review already reports doing — "verified locally: X rejected, Y allowed"),
+or flagging something as a gap that's actually explicitly out of scope and
+tracked in a separate follow-up issue.
+
+1. **Find the linked issue.** Check the PR body for `Closes #N` / `Fixes #N` /
+   `Resolves #N` / `Related to #N`.
+2. **Read the issue** — title, body, comments, and state (open/closed). This is
+   where scope, acceptance criteria, and intentional exclusions live (e.g. "RO
+   hardening is out of scope here, tracked in #1039").
+3. **Read the full PR body**, not just the diff — the author's own
+   "What/Why/How to test" section often states exact scope and known
+   limitations.
+4. **Read every PR comment and review** — issue-level comments, inline review
+   comments, and review summaries, including bot reviews (CodeRabbit, etc.)
+   and any human self-review. A self-review claiming specific local
+   verification, an explicit scope justification, or a bot flag about missing
+   coverage all change what's actually left to check.
+5. **Only after that**, read the diff and start functional/manual testing —
+   and treat any claimed verification from step 4 as a starting point to
+   confirm or challenge, not something to silently re-derive from scratch
+   without mentioning it.
+
 ## Quick start — snapshot a PR
 
 Instead of running individual `gh` commands, use:
 
 ```bash
-~/.my-agent-skills/pr-inspect-and-act/scripts/pr-snapshot.sh OWNER/REPO NUMBER
+~/.claude/skills/pr-inspect-and-act/scripts/pr-snapshot.sh OWNER/REPO NUMBER
 ```
 
-This fires all requests in parallel and prints: summary, changed files with line counts, inline review comments, and issue-level comments. Use the individual commands below only when you need specific slices.
+This fires all requests in parallel and prints, **in this order**: any linked
+issue(s) (parsed from `Closes/Fixes/Resolves/Related to #N` in the PR body,
+with their own title/body/comments), PR summary, changed files with line
+counts, review summaries (approvals/change-requests/bodies), inline review
+comments, and issue-level comments on the PR. Read the linked-issue section
+before the diff. Use the individual commands below only when you need specific
+slices.
 
 ## Find PRs
 
