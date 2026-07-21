@@ -312,7 +312,6 @@ def make_pdf_class(accent):
                 fname=str(FONT_DIR / "DejaVuSans-BoldOblique.ttf"))
             self.add_font(
                 "DejaVuMono", fname=str(FONT_DIR / "DejaVuSansMono.ttf"))
-            self._h1_count    = 0
             self._toc_entries = []
             self._toc_y       = None
             # fpdf2's markdown=True renderer turns [text](url) into a real
@@ -508,8 +507,18 @@ def make_pdf_class(accent):
         # `###`+ -> render_h2 (bold + rule, no TOC entry).
 
         def render_h1(self, text):
-            self._h1_count += 1
-            if self._h1_count > 1:
+            # Every top-level section always starts its own fresh page —
+            # *unless* nothing has been rendered on the current page yet
+            # (i.e. this heading is the very first content block after
+            # add_page(), with the cursor still sitting at the top margin),
+            # in which case forcing a page break would just waste a blank
+            # page. Checking cursor position (not "is this the first h1
+            # call ever") matters because a report can have intro content —
+            # paragraphs, a table — before its first real section heading;
+            # counting calls alone would wrongly let that first heading
+            # land wherever the intro left the cursor instead of on its own
+            # page.
+            if self.get_y() > MARGIN + 2:
                 self.add_page()
             else:
                 self.ln(4)

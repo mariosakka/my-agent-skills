@@ -134,13 +134,13 @@ top-level sections, ~24 `#`/`##`-level headings, dozens of fenced
 ```typescript``` code blocks including some with very long single
 lines — long GitHub URLs as markdown links, long TypeScript union
 types — bullet lists, a multi-row table, and a long two-line-wrapping
-subtitle): produced a clean 46-page, 164KB PDF. Verified with
+subtitle): produced a clean 47-page, 164KB PDF. Verified with
 `pdfinfo`, `pdftotext -layout`, and by rasterizing individual pages
 to PNG (`pdftoppm`) for visual inspection, plus programmatic link
 verification via `pypdf` (96 real `/Link` annotations found, each
 with the correct GitHub URI).
 
-This same real-world test caught and fixed three genuine rendering
+This same real-world test caught and fixed four genuine rendering
 bugs during development (**do not reintroduce these**):
 1. `render_h1` used `cell()` (no wrapping) for the heading text — a
    long `##` heading would overflow horizontally past the page edge
@@ -159,6 +159,18 @@ bugs during development (**do not reintroduce these**):
    page. Fixed by disabling auto-page-break for the whole back-fill
    (matching the technique `title_page()` already used for the
    copyright line) and clipping entries that don't fit instead.
+4. `render_h1` decided whether to force a page break by counting
+   calls (`if self._h1_count > 1: add_page()`) — the assumption being
+   that the *first* h1 heading ever rendered is always right at the
+   top of a fresh page. That's false whenever a report has intro
+   content (paragraphs, a table) before its first section heading:
+   that first heading would render wherever the intro left the
+   cursor, mid-page, right after unrelated content — reproduced
+   exactly by this report's own front-matter intro pushing "1. Design
+   Patterns" down instead of onto its own page. Fixed by checking
+   cursor position instead of call count: force a page break unless
+   the cursor is still sitting at the top margin (nothing rendered on
+   the current page yet).
 
 Also exercised with a synthetic `.md` covering frontmatter (including
 `accent` override), a pipe table with a long wrapped cell, a fenced
