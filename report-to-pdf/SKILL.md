@@ -74,9 +74,10 @@ Body Markdown, and how each element renders:
 
 | Markdown                          | Renders as                                                |
 |------------------------------------|------------------------------------------------------------|
-| `# Title`                          | Title-page title only (first one found; consumed, not repeated in the body). Any *further* `#` in the body is treated the same as `##`. |
-| `## Section`                       | Body section heading: starts a new page, left accent bar, bold 16pt — and gets a Table of Contents entry. |
-| `### Subsection` (and `####`+)      | Bold 12pt + underline rule, no page break, **no TOC entry** (keeps the TOC scannable — matches the reference script's TOC being top-level-sections-only). |
+| `# Title`                          | The *very first* `#` in the file is the title-page title only (consumed, not repeated in the body). Any **later** `#` is a real major heading (see below). |
+| `# Major Section` (after the first `#`) | **Major heading.** Always starts its own fresh page (unless the cursor is already at the top of a blank page), big colored left bar, bold 16pt, black text — and gets a Table of Contents entry. Use for genuine top-level divisions only; each one costs a page. |
+| `## Subsection`                    | **Subheading.** Bold 13pt, accent-colored text with a short accent-colored underline (visually distinct from both tiers above and below) — does **not** force a page break, just continues the flow. Still gets a TOC entry. Has its own "don't strand a heading at the very bottom of a page" check. |
+| `### Sub-subsection` (and `####`+) | **Tertiary heading.** Bold 12pt, neutral gray, full-width thin rule, no page break, **no TOC entry** (keeps the TOC scannable). |
 | Paragraph text                     | Justified-left body paragraph, 10pt. |
 | `- item` / `* item`                | Bullet list (•). |
 | `1. item`                          | Numbered list. |
@@ -134,7 +135,7 @@ top-level sections, ~24 `#`/`##`-level headings, dozens of fenced
 ```typescript``` code blocks including some with very long single
 lines — long GitHub URLs as markdown links, long TypeScript union
 types — bullet lists, a multi-row table, and a long two-line-wrapping
-subtitle): produced a clean 47-page, 164KB PDF. Verified with
+subtitle): produced a clean 32-page, 155KB PDF. Verified with
 `pdfinfo`, `pdftotext -layout`, and by rasterizing individual pages
 to PNG (`pdftoppm`) for visual inspection, plus programmatic link
 verification via `pypdf` (96 real `/Link` annotations found, each
@@ -171,6 +172,20 @@ bugs during development (**do not reintroduce these**):
    cursor position instead of call count: force a page break unless
    the cursor is still sitting at the top margin (nothing rendered on
    the current page yet).
+5. `##` and `#` were both treated as the same heading tier (both
+   forced a page break). Two consecutive headings with nothing
+   between them — a bare `#` major heading immediately followed by a
+   `##` (e.g. "1. Design Patterns" directly followed by "1.1
+   Controller layer...") — meant the second heading's forced page
+   break left the first stranded alone on an otherwise-blank page.
+   Fixed by splitting into a real three-tier hierarchy: only `#`
+   forces a page break now; `##` became a visually distinct
+   "subheading" tier (accent-colored text, short colored underline)
+   that never forces its own page, with its own "don't strand a
+   heading at the bottom of a page" space check instead; `###`+ kept
+   the original bold+gray+rule tertiary treatment. This also made
+   subheadings look meaningfully different from major headings, not
+   just a smaller copy of the same style.
 
 Also exercised with a synthetic `.md` covering frontmatter (including
 `accent` override), a pipe table with a long wrapped cell, a fenced

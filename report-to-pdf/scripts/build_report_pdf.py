@@ -501,23 +501,33 @@ def make_pdf_class(accent):
                             new_x=XPos.LEFT, new_y=YPos.NEXT)
 
         # ── Section renderers ───────────────────────────────────────────────
-        # Mapping from markdown heading level to renderer (documented in
-        # SKILL.md): frontmatter/first `#` -> title page only; markdown `##`
-        # -> render_h1 (new page + accent bar, gets a TOC entry); markdown
-        # `###`+ -> render_h2 (bold + rule, no TOC entry).
+        # Three distinct heading tiers (documented in SKILL.md):
+        #   `#`    -> render_h1: MAJOR heading. Always starts its own fresh
+        #             page, big colored left bar, biggest bold text, gets a
+        #             TOC entry. For real top-level divisions only — this is
+        #             the one tier that costs a page break.
+        #   `##`   -> render_h2: SUBHEADING. Same page as whatever came
+        #             before it (no forced page break — a subheading right
+        #             after a bare major heading, or after a paragraph,
+        #             just continues the flow); accent-colored bold text
+        #             with a short accent-colored rule under just the text,
+        #             visually distinct from both tiers above and below it.
+        #             Still gets a TOC entry. Has its own "don't strand a
+        #             heading at the very bottom of a page" check, since
+        #             nothing else forces it onto a fresh page for it.
+        #   `###`+ -> render_h3: tertiary heading. Bold, neutral gray, full-
+        #             width thin rule, no page break, no TOC entry — for
+        #             fine-grained subsections that don't need navigating to
+        #             directly.
 
         def render_h1(self, text):
-            # Every top-level section always starts its own fresh page —
-            # *unless* nothing has been rendered on the current page yet
-            # (i.e. this heading is the very first content block after
-            # add_page(), with the cursor still sitting at the top margin),
-            # in which case forcing a page break would just waste a blank
-            # page. Checking cursor position (not "is this the first h1
-            # call ever") matters because a report can have intro content —
-            # paragraphs, a table — before its first real section heading;
-            # counting calls alone would wrongly let that first heading
-            # land wherever the intro left the cursor instead of on its own
-            # page.
+            # Every major section always starts its own fresh page — unless
+            # nothing has been rendered on the current page yet (cursor
+            # still at the top margin), in which case forcing a page break
+            # would just waste a blank page. Checking cursor position
+            # matters because a report can have intro content (paragraphs,
+            # a table) before its first heading, or several headings with
+            # nothing in between them.
             if self.get_y() > MARGIN + 2:
                 self.add_page()
             else:
@@ -548,6 +558,32 @@ def make_pdf_class(accent):
             self.ln(3)
 
         def render_h2(self, text):
+            self.ln(4)
+            line_h = 6.5
+            self.set_font("DejaVu", style="B", size=13)
+            # Subheadings never force a page break, but a heading stranded
+            # as the very last line on a page (with its content starting
+            # fresh on the next one) reads just as badly as one landing
+            # mid-paragraph — leave room for the heading itself plus a
+            # little breathing room before deciding it still fits here.
+            wrapped = self.multi_cell(
+                CONTENT_W, line_h, text, markdown=True,
+                dry_run=True, output="LINES")
+            needed_h = len(wrapped) * line_h + 12
+            if self.get_y() + needed_h > self.h - self.b_margin:
+                self.add_page()
+
+            self._toc_entries.append((text, self.page))
+
+            self.set_text_color(*accent)
+            self.multi_cell(CONTENT_W, line_h, text, markdown=True,
+                            new_x=XPos.LEFT, new_y=YPos.NEXT)
+            rule_w = min(CONTENT_W, self.get_string_width(text) + 4)
+            self.set_draw_color(*accent)
+            self.line(MARGIN, self.get_y(), MARGIN + rule_w, self.get_y())
+            self.ln(3)
+
+        def render_h3(self, text):
             self.ln(4)
             self.set_font("DejaVu", style="B", size=12)
             self.set_text_color(*C_H2)
@@ -701,16 +737,19 @@ def make_pdf_class(accent):
                 btype = block["type"]
                 if btype.startswith("h") and btype[1:].isdigit():
                     level = int(btype[1:])
-                    # Markdown level 1 (`#`) is consumed as the doc title and
-                    # never reaches here as a body block (see parse_markdown).
-                    # Level 2 (`##`) is the body's top-level section -> the
-                    # page-break/accent-bar/TOC-entry renderer. Level 3+
-                    # (`###`, `####`, ...) all collapse onto the bold+rule
-                    # subsection renderer.
-                    if level <= 2:
+                    # Only the very FIRST `#` in the whole document is
+                    # consumed as the doc title (see parse_markdown) — any
+                    # later `#` still reaches here as a level-1 block, same
+                    # as every other. Three tiers: level 1 -> major heading
+                    # (own page, big accent bar); level 2 -> subheading
+                    # (accent-colored, no page break); level 3+ -> tertiary
+                    # (bold+rule, no TOC entry).
+                    if level == 1:
                         self.render_h1(block["text"])
-                    else:
+                    elif level == 2:
                         self.render_h2(block["text"])
+                    else:
+                        self.render_h3(block["text"])
                 elif btype == "p":
                     self.render_p(block["text"])
                 elif btype == "bullets":
