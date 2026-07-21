@@ -53,10 +53,15 @@ FONT_DIR = Path("/usr/share/fonts/truetype/dejavu")
 # Deliberately a small hand-rolled block parser rather than a full Markdown
 # engine — this only needs to cover a "report" subset: headings, paragraphs,
 # bullet/numbered lists, fenced code blocks, pipe tables, and hr dividers.
-# Inline emphasis (**bold**, *italic*, _em_, `code`) is *stripped*, not
-# rendered — fpdf's core/DejaVu fonts don't do inline bold spans inside a
-# single multi_cell without manual character-by-character width tracking,
-# which is a rabbit hole not worth it for a first version. See SKILL.md.
+#
+# Inline **bold** and [text](url) links are left INTACT here and rendered by
+# fpdf2's own built-in `markdown=True` support on cell()/multi_cell() calls —
+# fpdf2 natively parses **bold**, __italic__, and [text](url) into real
+# clickable link annotations, so there's no need (and no reason) to hand-roll
+# that. Only single-marker *italic*/_italic_ (not recognized by fpdf2, which
+# only understands the double-underscore form) and inline `code` backticks
+# (no monospace-inline support in fpdf2's markdown mode) are normalized/
+# stripped here, before the text ever reaches a markdown=True render call.
 
 FRONTMATTER_RE = re.compile(r"^---\s*$")
 FENCE_RE       = re.compile(r"^```(\S*)\s*$")
@@ -67,17 +72,21 @@ HR_RE          = re.compile(r"^(-{3,}|\*{3,}|_{3,})\s*$")
 TABLE_ROW_RE   = re.compile(r"^\|.*\|\s*$")
 TABLE_SEP_RE   = re.compile(r"^\|?[\s:|-]+\|?$")
 
+# Single-asterisk italics, carefully excluding `**bold**` runs on either side.
+SINGLE_STAR_RE = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)")
+# Single-underscore italics — `__x__` (fpdf2 italics) is left alone; only a
+# lone `_x_` with word boundaries on the outside is normalized.
+SINGLE_UNDERSCORE_RE = re.compile(r"(?<!_)(?<!\w)_(?!_)(.+?)(?<!_)_(?!_)(?!\w)")
 
-def strip_inline_emphasis(text):
-    """Strip markdown inline emphasis/backticks/links — render plain text."""
-    # Links: [text](url) -> text (url)
-    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", text)
-    # Bold/italic: **x**, __x__, *x*, _x_
-    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
-    text = re.sub(r"__(.+?)__", r"\1", text)
-    text = re.sub(r"\*(.+?)\*", r"\1", text)
-    text = re.sub(r"(?<!\w)_(.+?)_(?!\w)", r"\1", text)
-    # Inline code: `x` -> x
+
+def prepare_markdown_text(text):
+    """Normalize inline markdown so fpdf2's `markdown=True` renderer can
+    handle it directly: keep **bold** and [text](url) as-is (fpdf2 renders
+    both natively, the latter as a real clickable link), fold single-marker
+    italics into fpdf2's `__italic__` form, and strip inline `code`
+    backticks to plain text (fpdf2 has no inline-monospace support)."""
+    text = SINGLE_STAR_RE.sub(r"__\1__", text)
+    text = SINGLE_UNDERSCORE_RE.sub(r"__\1__", text)
     text = re.sub(r"`([^`]+)`", r"\1", text)
 
     return text
@@ -153,7 +162,7 @@ def parse_markdown(text):
         heading_match = HEADING_RE.match(stripped)
         if heading_match:
             level = len(heading_match.group(1))
-            heading_text = strip_inline_emphasis(heading_match.group(2).strip())
+            heading_text = prepare_markdown_text(heading_match.group(2).strip())
             if level == 1 and doc_title is None:
                 doc_title = heading_text
                 i += 1
@@ -177,13 +186,13 @@ def parse_markdown(text):
             rows = []
             for row_line in data_lines:
                 cells = [
-                    strip_inline_emphasis(c.strip())
+                    prepare_markdown_text(c.strip())
                     for c in row_line.strip("|").split("|")
                 ]
                 rows.append(cells)
             blocks.append({
                 "type": "table",
-                "headers": [strip_inline_emphasis(h) for h in headers],
+                "headers": [prepare_markdown_text(h) for h in headers],
                 "rows": rows,
             })
             continue
@@ -195,14 +204,14 @@ def parse_markdown(text):
                 cur = lines[i].strip()
                 bullet_match = BULLET_RE.match(cur)
                 if bullet_match:
-                    items.append(strip_inline_emphasis(bullet_match.group(1)))
+                    items.append(prepare_markdown_text(bullet_match.group(1)))
                     i += 1
                 elif cur and not HEADING_RE.match(cur) and not BULLET_RE.match(cur) \
                         and not NUMBERED_RE.match(cur) and not FENCE_RE.match(cur) \
                         and not TABLE_ROW_RE.match(cur) and not HR_RE.match(cur) \
                         and items and (len(lines[i]) - len(lines[i].lstrip())) > 0:
                     # indented continuation line — append to previous item
-                    items[-1] += " " + strip_inline_emphasis(cur)
+                    items[-1] += " " + prepare_markdown_text(cur)
                     i += 1
                 else:
                     break
@@ -216,13 +225,13 @@ def parse_markdown(text):
                 cur = lines[i].strip()
                 numbered_match = NUMBERED_RE.match(cur)
                 if numbered_match:
-                    items.append(strip_inline_emphasis(numbered_match.group(1)))
+                    items.append(prepare_markdown_text(numbered_match.group(1)))
                     i += 1
                 elif cur and not HEADING_RE.match(cur) and not BULLET_RE.match(cur) \
                         and not NUMBERED_RE.match(cur) and not FENCE_RE.match(cur) \
                         and not TABLE_ROW_RE.match(cur) and not HR_RE.match(cur) \
                         and items and (len(lines[i]) - len(lines[i].lstrip())) > 0:
-                    items[-1] += " " + strip_inline_emphasis(cur)
+                    items[-1] += " " + prepare_markdown_text(cur)
                     i += 1
                 else:
                     break
@@ -242,7 +251,7 @@ def parse_markdown(text):
             i += 1
         blocks.append({
             "type": "p",
-            "text": strip_inline_emphasis(" ".join(para_lines)),
+            "text": prepare_markdown_text(" ".join(para_lines)),
         })
 
     return doc_title, blocks
@@ -299,20 +308,34 @@ def make_pdf_class(accent):
                 "DejaVu", style="I",
                 fname=str(FONT_DIR / "DejaVuSans-Oblique.ttf"))
             self.add_font(
+                "DejaVu", style="BI",
+                fname=str(FONT_DIR / "DejaVuSans-BoldOblique.ttf"))
+            self.add_font(
                 "DejaVuMono", fname=str(FONT_DIR / "DejaVuSansMono.ttf"))
             self._h1_count    = 0
             self._toc_entries = []
             self._toc_y       = None
+            # fpdf2's markdown=True renderer turns [text](url) into a real
+            # clickable link annotation, underlined by default — give it a
+            # distinct color so it actually reads as a link, not plain text.
+            self.MARKDOWN_LINK_COLOR = (30, 90, 180)
 
         # ── Header / Footer ───────────────────────────────────────────────
 
         def header(self):
             if self.page <= 1:
                 return
-            self.set_font("DejaVu", size=8)
+            # Running header is one line by design (it repeats on every
+            # page) — shrink the font rather than let a long title run off
+            # the right edge, since cell() doesn't wrap.
+            size = 8
+            self.set_font("DejaVu", size=size)
+            title = self.meta["title"]
+            while self.get_string_width(title) > CONTENT_W and size > 5:
+                size -= 0.5
+                self.set_font("DejaVu", size=size)
             self.set_text_color(*C_MUTED)
-            self.cell(0, 6, self.meta["title"],
-                      new_x=XPos.LEFT, new_y=YPos.NEXT)
+            self.cell(0, 6, title, new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(1)
 
         def footer(self):
@@ -357,16 +380,19 @@ def make_pdf_class(accent):
             self.ln(2)
 
             if self.meta.get("subtitle"):
+                # A long subtitle centered via cell() draws at a computed
+                # x that can run off both edges of the page — multi_cell
+                # wraps it within the content width instead.
                 self.set_font("DejaVu", size=14)
                 self.set_text_color(*C_MUTED)
-                self.cell(0, 8, self.meta["subtitle"], align="C",
-                          new_x=XPos.LEFT, new_y=YPos.NEXT)
+                self.multi_cell(CONTENT_W, 8, self.meta["subtitle"],
+                                align="C", new_x=XPos.LEFT, new_y=YPos.NEXT)
                 self.ln(1)
 
             self.set_font("DejaVu", size=10)
             self.set_text_color(*C_MUTED)
-            self.cell(0, 6, f"Version {self.meta['version']}", align="C",
-                      new_x=XPos.LEFT, new_y=YPos.NEXT)
+            self.multi_cell(CONTENT_W, 6, f"Version {self.meta['version']}",
+                            align="C", new_x=XPos.LEFT, new_y=YPos.NEXT)
 
             self.ln(10)
             self._toc_y = self.get_y()
@@ -381,8 +407,8 @@ def make_pdf_class(accent):
             self.set_font("DejaVu", size=8)
             self.set_text_color(*C_MUTED)
             if self.meta.get("vendor"):
-                self.cell(0, 5, f"© {self.meta['vendor']}", align="C",
-                          new_x=XPos.LEFT, new_y=YPos.NEXT)
+                self.multi_cell(CONTENT_W, 5, f"© {self.meta['vendor']}",
+                                align="C", new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.set_auto_page_break(True, margin=22)
 
         # ── TOC back-fill ─────────────────────────────────────────────────
@@ -398,6 +424,15 @@ def make_pdf_class(accent):
             self.page  = 1
             self.set_xy(MARGIN, self._toc_y)
 
+            # A long section list can run past the bottom of page 1 —
+            # auto-page-break must stay OFF for this whole back-fill, or
+            # fpdf2 inserting a "new" page mid-back-fill (while self.page is
+            # artificially pinned to 1) corrupts whatever real page follows.
+            # Entries that don't fit are clipped rather than triggering a
+            # page break — the same tradeoff title_page() already makes for
+            # the copyright line.
+            self.set_auto_page_break(False)
+
             self.set_font("DejaVu", style="B", size=12)
             self.set_text_color(*C_H2)
             self.cell(0, 7, "Contents", new_x=XPos.LEFT, new_y=YPos.NEXT)
@@ -406,34 +441,56 @@ def make_pdf_class(accent):
             self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
             self.ln(4)
 
+            # title_page() reserves the last ~18mm of page 1 for a fixed
+            # copyright line — TOC rows must stop well clear of it, not just
+            # clear of the normal auto-page-break margin.
+            toc_bottom_limit = self.h - 26
+            row_h = 6.5 if len(self._toc_entries) <= 22 else 6.0
+
             for title, abs_page in self._toc_entries:
                 display_page = abs_page - 1
                 y_row = self.get_y()
+                if y_row + row_h > toc_bottom_limit:
+                    break  # ran out of room on page 1 — clip, don't overflow
 
+                num_str = str(display_page)
                 self.set_font("DejaVu", size=10)
+                num_w = self.get_string_width(num_str) + 2
+                title_max_w = CONTENT_W - num_w - 6
+
+                # Long entry titles shrink to fit their single-line slot
+                # rather than running into the dot-leader/page-number area.
+                size = 10
+                self.set_font("DejaVu", size=size)
+                while (self.get_string_width(title) > title_max_w
+                        and size > 7):
+                    size -= 0.5
+                    self.set_font("DejaVu", size=size)
+
                 self.set_text_color(*C_TEXT)
                 self.set_xy(MARGIN, y_row)
-                self.cell(CONTENT_W - 16, 6.5, title,
+                self.cell(title_max_w, row_h, title,
                           new_x=XPos.LEFT, new_y=YPos.TOP)
 
                 title_x_end = MARGIN + self.get_string_width(title) + 2
-                num_str = str(display_page)
-                num_w   = self.get_string_width(num_str) + 2
                 dot_gap = (PAGE_W - MARGIN - num_w) - title_x_end
                 if dot_gap > 3:
+                    self.set_font("DejaVu", size=10)
                     dot_w    = self.get_string_width(".")
                     n_dots   = max(0, int(dot_gap / (dot_w + 0.3)) - 1)
                     dots_str = " " + "." * n_dots
                     self.set_xy(title_x_end, y_row)
                     self.set_text_color(*C_MUTED)
-                    self.cell(dot_gap, 6.5, dots_str,
+                    self.cell(dot_gap, row_h, dots_str,
                               new_x=XPos.LEFT, new_y=YPos.TOP)
 
+                self.set_font("DejaVu", size=10)
                 self.set_xy(PAGE_W - MARGIN - num_w, y_row)
                 self.set_text_color(*C_MUTED)
-                self.cell(num_w, 6.5, num_str, align="R",
+                self.cell(num_w, row_h, num_str, align="R",
                           new_x=XPos.LEFT, new_y=YPos.NEXT)
 
+            self.set_auto_page_break(True, margin=22)
             self.page = last_page
 
         # ── Helpers ───────────────────────────────────────────────────────
@@ -441,7 +498,7 @@ def make_pdf_class(accent):
         def _text(self, txt, size=10, bold=False, color=C_TEXT, line_h=5.5):
             self.set_font("DejaVu", style="B" if bold else "", size=size)
             self.set_text_color(*color)
-            self.multi_cell(CONTENT_W, line_h, txt,
+            self.multi_cell(CONTENT_W, line_h, txt, markdown=True,
                             new_x=XPos.LEFT, new_y=YPos.NEXT)
 
         # ── Section renderers ───────────────────────────────────────────────
@@ -459,23 +516,33 @@ def make_pdf_class(accent):
 
             self._toc_entries.append((text, self.page))
 
-            y0    = self.get_y()
-            bar_h = 10
+            text_w = CONTENT_W - 7
+            line_h = 7
+            self.set_font("DejaVu", style="B", size=16)
+            # Long headings need to wrap like any other text block — measure
+            # the wrapped line count first so the accent bar can grow to
+            # match instead of a fixed height that a one-line heading was
+            # sized for.
+            wrapped = self.multi_cell(
+                text_w, line_h, text, markdown=True,
+                dry_run=True, output="LINES")
+            bar_h = max(10, len(wrapped) * line_h + 3)
+
+            y0 = self.get_y()
             self.set_fill_color(*accent)
             self.rect(MARGIN, y0, 3, bar_h, style="F")
 
             self.set_xy(MARGIN + 7, y0)
-            self.set_font("DejaVu", style="B", size=16)
             self.set_text_color(*C_H1)
-            self.cell(CONTENT_W - 7, bar_h, text,
-                      new_x=XPos.LEFT, new_y=YPos.NEXT)
+            self.multi_cell(text_w, line_h, text, markdown=True,
+                            new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(3)
 
         def render_h2(self, text):
             self.ln(4)
             self.set_font("DejaVu", style="B", size=12)
             self.set_text_color(*C_H2)
-            self.multi_cell(CONTENT_W, 7, text,
+            self.multi_cell(CONTENT_W, 7, text, markdown=True,
                             new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.set_draw_color(*C_RULE)
             self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
@@ -494,6 +561,7 @@ def make_pdf_class(accent):
                 self.cell(5, 5.5, "•",
                           new_x=XPos.RIGHT, new_y=YPos.TOP)
                 self.multi_cell(CONTENT_W - indent - 5, 5.5, item,
+                                markdown=True,
                                 new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(1)
 
@@ -507,6 +575,7 @@ def make_pdf_class(accent):
                 self.cell(7, 5.5, f"{i}.", new_x=XPos.RIGHT, new_y=YPos.TOP)
                 self.set_font("DejaVu", size=10)
                 self.multi_cell(CONTENT_W - indent - 7, 5.5, item,
+                                markdown=True,
                                 new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(1)
 
@@ -517,13 +586,27 @@ def make_pdf_class(accent):
                 self.set_text_color(*C_MUTED)
                 self.cell(0, 5, lang, new_x=XPos.LEFT, new_y=YPos.NEXT)
 
-            self.set_fill_color(*C_CODE_BG)
-            self.set_draw_color(*C_RULE)
-            self.set_font("DejaVuMono", size=8.5)
-            self.set_text_color(*C_CODE_FG)
-            lines   = text.split("\n")
-            pad     = 3
-            block_h = len(lines) * 4.5 + pad * 2
+            lines    = text.split("\n")
+            pad      = 3
+            avail_w  = CONTENT_W - pad * 2
+            base_size = 8.5
+
+            # Code shouldn't reflow (it's monospace, indentation-sensitive),
+            # but a single long line (a long URL, an unbroken string) can
+            # otherwise run straight past the box border and over whatever
+            # follows. Measure the widest line and shrink the whole block's
+            # font uniformly — never per-line, or the monospace grid breaks —
+            # so everything fits within the content width.
+            self.set_font("DejaVuMono", size=base_size)
+            max_line_w = max(
+                (self.get_string_width(line) for line in lines), default=0)
+            font_size = base_size
+            if max_line_w > avail_w > 0:
+                font_size = max(5.5, base_size * avail_w / max_line_w)
+                self.set_font("DejaVuMono", size=font_size)
+
+            line_h  = font_size / base_size * 4.5
+            block_h = len(lines) * line_h + pad * 2
 
             # Fixed-width monospace block can overflow the page height for
             # very long snippets — start a fresh page rather than letting a
@@ -531,12 +614,15 @@ def make_pdf_class(accent):
             if self.get_y() + block_h > self.h - self.b_margin:
                 self.add_page()
 
+            self.set_fill_color(*C_CODE_BG)
+            self.set_draw_color(*C_RULE)
+            self.set_text_color(*C_CODE_FG)
             x, y = MARGIN, self.get_y()
             self.rect(x, y, CONTENT_W, block_h, style="FD")
             self.set_xy(x + pad, y + pad)
             for line in lines:
                 self.set_x(x + pad)
-                self.cell(CONTENT_W - pad * 2, 4.5, line,
+                self.cell(avail_w, line_h, line,
                           new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(4)
 
@@ -546,12 +632,25 @@ def make_pdf_class(accent):
             col_w  = [CONTENT_W / n_cols] * n_cols
 
             self.set_font("DejaVu", style="B", size=9)
+            header_lines = max(
+                len(self.multi_cell(col_w[j], 5, headers[j], markdown=True,
+                                    dry_run=True, output="LINES"))
+                for j in range(n_cols)
+            )
+            header_h = max(6, header_lines * 5 + 2)
+
             self.set_text_color(255, 255, 255)
-            self.set_fill_color(*C_H2)
-            for i, h in enumerate(headers):
-                self.cell(col_w[i], 6, h, border=1, fill=True,
-                          new_x=XPos.RIGHT, new_y=YPos.TOP)
-            self.ln()
+            y0 = self.get_y()
+            x0 = MARGIN
+            for j, h in enumerate(headers):
+                self.set_fill_color(*C_H2)
+                self.set_draw_color(*C_RULE)
+                self.rect(x0, y0, col_w[j], header_h, style="FD")
+                self.set_xy(x0 + 1, y0 + 1)
+                self.multi_cell(col_w[j] - 2, 5, h, markdown=True,
+                                new_x=XPos.LEFT, new_y=YPos.NEXT)
+                x0 += col_w[j]
+            self.set_y(y0 + header_h)
 
             self.set_font("DejaVu", size=9)
             self.set_text_color(*C_TEXT)
@@ -559,7 +658,7 @@ def make_pdf_class(accent):
             for row in rows:
                 cells = list(row) + [""] * (n_cols - len(row))
                 max_lines = max(
-                    len(self.multi_cell(col_w[j], 5, cells[j],
+                    len(self.multi_cell(col_w[j], 5, cells[j], markdown=True,
                                         dry_run=True, output="LINES"))
                     for j in range(n_cols)
                 )
@@ -576,7 +675,7 @@ def make_pdf_class(accent):
                     self.set_draw_color(*C_RULE)
                     self.rect(x0, y0, col_w[j], row_h, style="FD")
                     self.set_xy(x0 + 2, y0 + 2)
-                    self.multi_cell(col_w[j] - 4, 5, cells[j],
+                    self.multi_cell(col_w[j] - 4, 5, cells[j], markdown=True,
                                     new_x=XPos.LEFT, new_y=YPos.NEXT)
                     x0 += col_w[j]
                 self.set_y(y0 + row_h)

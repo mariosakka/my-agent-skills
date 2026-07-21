@@ -83,16 +83,21 @@ Body Markdown, and how each element renders:
 | ```` ```lang ... ``` ````          | Shaded, bordered monospace code block; the language tag (if present) is printed as a small italic label above the block. No syntax highlighting. |
 | `\| a \| b \|` with a `---` separator row | Bordered table, bold header row, zebra-striped body rows, word-wrapped cells, equal column widths. |
 | `---` / `***` / `___` on its own line | Vertical spacer (not a page break). |
-| `**bold**`, `*italic*`, `` `code` ``, `[text](url)` | Inline emphasis/link markup is **stripped, not rendered** — text prints plain (link becomes `text (url)`). See Limitations. |
+| `**bold**` | Real bold text, via fpdf2's built-in `markdown=True` renderer. |
+| `[text](url)` | A real, clickable PDF link annotation — just the display text is shown, not the raw URL — styled in a distinct link color. |
+| `*italic*` / `_italic_` | Rendered italic (folded into fpdf2's native `__italic__` form internally). |
+| `` `code` `` | Inline code backticks are stripped — no monospace-inline support, renders as plain text. |
+
+Headings, paragraphs, bullets, numbered items, and table cells all
+render through fpdf2's `markdown=True` path, so **bold** and
+`[text](url)` links work everywhere text appears, including inside
+headings and table cells. Fenced code blocks are the one exception —
+their content is rendered completely literally (no markdown parsing),
+so a code sample containing literal `**`, `__`, or `[]()` won't be
+misinterpreted.
 
 ## Limitations (v1)
 
-- **No inline bold/italic spans.** fpdf's core/DejaVu fonts don't
-  support mixed bold/plain runs inside a single `multi_cell` without
-  manual per-character width tracking, which was judged not worth it
-  for a first version — the reference script has the same limitation.
-  `**bold**` and `` `code` `` render as plain text with the markers
-  removed.
 - **No images.** `![alt](path)` is not parsed in v1 (the reference
   script's "screenshot not available" placeholder logic wasn't
   ported since it's not needed for text-only mentor/review reports).
@@ -103,21 +108,61 @@ Body Markdown, and how each element renders:
 - **TOC is `##`-level only.** `###`+ headings don't get TOC entries
   by design (see table above) — deep documents get a scannable TOC
   instead of a huge one.
+- **TOC entries beyond what fits on page 1 are clipped, not
+  overflowed onto a second page.** The back-filled TOC lives entirely
+  on the title page; a report with a very large number of `#`/`##`
+  headings (20+) may not show every entry. This is a deliberate
+  tradeoff — the alternative (letting the TOC auto-page-break mid
+  back-fill) previously corrupted whatever page came right after the
+  title page, which is a far worse failure mode than a few missing
+  TOC rows.
 - **Table columns are equal-width.** No per-column width hints from
-  Markdown; wide/narrow content columns will get the same width.
+  Markdown; wide/narrow content columns will get the same width. A
+  single unbreakable long value (e.g. a long identifier with no
+  spaces) in a narrow column will still be forced to break mid-word
+  rather than overflow the cell.
+- **Code blocks don't reflow, but do shrink to fit.** A code line
+  wider than the page is never wrapped (would break monospace
+  alignment) — instead the whole block's font size shrinks uniformly
+  (down to a 5.5pt floor) so it stays inside its box.
 
 ## Testing performed
 
-Run against a real report,
-`~/Documents/work/docs/internship-2026-code-review.md` (h1/h2/h3
-headings, bullet lists, bold text, inline code, fenced ```typescript
-code blocks, no tables): produced a clean 18-page, 94KB PDF with a
-correctly back-filled TOC (8 `##`-level entries with accurate page
-numbers via dot leaders), no page-overflow in any code block, and no
-duplicated headings. Verified with `pdfinfo`/`pdftotext -layout`.
+Run against a real, large report,
+`~/Documents/work/docs/internship-2026-categorized-report.md` (six
+top-level sections, ~24 `#`/`##`-level headings, dozens of fenced
+```typescript``` code blocks including some with very long single
+lines — long GitHub URLs as markdown links, long TypeScript union
+types — bullet lists, a multi-row table, and a long two-line-wrapping
+subtitle): produced a clean 46-page, 164KB PDF. Verified with
+`pdfinfo`, `pdftotext -layout`, and by rasterizing individual pages
+to PNG (`pdftoppm`) for visual inspection, plus programmatic link
+verification via `pypdf` (96 real `/Link` annotations found, each
+with the correct GitHub URI).
+
+This same real-world test caught and fixed three genuine rendering
+bugs during development (**do not reintroduce these**):
+1. `render_h1` used `cell()` (no wrapping) for the heading text — a
+   long `##` heading would overflow horizontally past the page edge
+   instead of wrapping. Fixed by switching to `multi_cell()` with a
+   pre-measured dry-run pass to size the accent bar to the wrapped
+   height.
+2. The title page's subtitle/version/copyright lines used `cell()`
+   with `align="C"` — long centered text draws from a computed
+   x-offset that can run off *both* edges of the page when the text
+   is wider than the page. Fixed by switching all three to
+   `multi_cell()`.
+3. `write_toc()`'s page-1 back-fill left `auto_page_break` enabled;
+   with enough TOC entries to run past the bottom of page 1, fpdf2's
+   automatic page-break fired *while `self.page` was artificially
+   pinned to 1*, corrupting the page that actually followed the title
+   page. Fixed by disabling auto-page-break for the whole back-fill
+   (matching the technique `title_page()` already used for the
+   copyright line) and clipping entries that don't fit instead.
 
 Also exercised with a synthetic `.md` covering frontmatter (including
 `accent` override), a pipe table with a long wrapped cell, a fenced
 ```python``` block, and inline `**bold**`/`` `code` ``/`[link](url)``
 markup — rendered a clean 3-page PDF with correct TOC, wrapped table
-cells, zebra striping, and stripped inline markup.
+cells, zebra striping, real clickable links, and real bold/italic
+text.
