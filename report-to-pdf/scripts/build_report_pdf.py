@@ -16,6 +16,7 @@ Usage:
     python3 build_report_pdf.py report.md -o out.pdf --logo logo.png
     python3 build_report_pdf.py report.md --vendor "ColeteOnline SRL" \
         --title "Custom Title" --accent "30,80,180"
+    python3 build_report_pdf.py report.md --dark  # dark theme
 
 Dependencies: fpdf2 (import name `fpdf`), Pillow (import name `PIL`),
 Pygments (import name `pygments`, for fenced-code syntax highlighting).
@@ -30,6 +31,12 @@ from datetime import date
 from pathlib import Path
 
 # ── Colours (defaults — override accent via CLI/frontmatter) ─────────────────
+#
+# Two full palettes: LIGHT (the original, unsuffixed names — used unless
+# --dark / frontmatter `theme: dark` is set) and DARK (explicit _DARK
+# suffix). `make_pdf_class(accent, dark)` picks one set of *lowercase*
+# locals from these at build time and every render method closes over
+# those locals — see make_pdf_class for why they're lowercase.
 
 C_BRAND   = (220,  50,  50)
 C_H1      = ( 30,  30,  30)
@@ -39,12 +46,31 @@ C_MUTED   = (120, 120, 120)
 C_CODE_BG = (245, 245, 245)
 C_CODE_FG = ( 50,  50, 160)
 C_RULE    = (210, 210, 210)
+C_LINK    = ( 30,  90, 180)
+C_TABLE_HEAD_BG = C_H2
+C_ROW_BASE      = (255, 255, 255)
+C_ROW_ALT       = (245, 245, 245)
 
-# Syntax-highlight palette — chosen against the light C_CODE_BG background,
-# not any particular Pygments theme. Keyed by Pygments token type; a token
-# not listed here is resolved by walking up `.parent` until one matches,
-# terminating at the bare `Token` root (see `_code_token_color`).
-CODE_STYLES = None  # populated lazily once pygments.token.Token is importable
+C_PAGE_BG_DARK       = ( 24,  25,  28)
+C_H1_DARK            = (235, 235, 238)
+C_H2_DARK            = (225, 225, 228)
+C_TEXT_DARK          = (215, 215, 218)
+C_MUTED_DARK         = (150, 150, 158)
+C_CODE_BG_DARK       = ( 40,  41,  46)
+C_CODE_FG_DARK       = (225, 225, 228)
+C_RULE_DARK          = ( 75,  76,  82)
+C_LINK_DARK          = (120, 170, 255)
+C_TABLE_HEAD_BG_DARK = ( 55,  56,  62)
+C_ROW_BASE_DARK      = C_PAGE_BG_DARK
+C_ROW_ALT_DARK       = ( 34,  35,  39)
+
+# Syntax-highlight palettes — LIGHT chosen against the light C_CODE_BG
+# background, DARK against C_CODE_BG_DARK; neither is tied to a specific
+# Pygments theme. Keyed by Pygments token type; a token not listed is
+# resolved by walking up `.parent` until one matches, terminating at the
+# bare `Token` root (see `_code_token_color`). Built lazily (and cached per
+# theme) once `pygments.token.Token` is known importable.
+_CODE_STYLES_CACHE = {}
 
 # ── Layout ────────────────────────────────────────────────────────────────────
 
@@ -298,42 +324,46 @@ def load_logo_png(path):
 # missing, unrecognized by Pygments, or Pygments itself isn't importable —
 # highlighting is a bonus, never a hard requirement to render a code block.
 
-def _code_styles():
-    """Build (lazily, once Pygments is known importable) the token-type ->
-    RGB color table used by `_code_token_color`."""
-    global CODE_STYLES
-    if CODE_STYLES is not None:
-        return CODE_STYLES
+def _code_styles(dark=False):
+    """Build (lazily, once per theme, once Pygments is known importable)
+    the token-type -> RGB color table used by `_code_token_color`."""
+    if dark in _CODE_STYLES_CACHE:
+        return _CODE_STYLES_CACHE[dark]
 
     from pygments.token import Token
 
-    CODE_STYLES = {
-        Token:                    C_CODE_FG,        # fallback: plain code color
-        Token.Keyword:            (170,  30, 130),
-        Token.Name.Builtin:       (  0, 110, 110),
-        Token.Name.Builtin.Pseudo:(  0, 110, 110),
-        Token.Name.Function:      (  0,  90, 170),
-        Token.Name.Class:         (  0,  90, 170),
-        Token.Name.Decorator:     (150, 100,   0),
-        Token.Name.Tag:           (170,  30, 130),
-        Token.Name.Attribute:     (  0,  90, 170),
-        Token.Literal.String:     ( 20, 130,  20),
-        Token.Literal.Number:     (180,  90,   0),
-        Token.Comment:            (130, 130, 130),
-        Token.Operator:           (120,  40,  40),
-        Token.Punctuation:        C_CODE_FG,
-        Token.Error:              (200,   0,   0),
+    fg = C_CODE_FG_DARK if dark else C_CODE_FG
+    styles = {
+        Token:                    fg,               # fallback: plain code color
+        Token.Punctuation:        fg,
     }
+    styles.update({
+        Token.Keyword:            (255, 121, 198) if dark else (170,  30, 130),
+        Token.Name.Builtin:       (102, 217, 239) if dark else (  0, 110, 110),
+        Token.Name.Builtin.Pseudo:(102, 217, 239) if dark else (  0, 110, 110),
+        Token.Name.Function:      (130, 170, 255) if dark else (  0,  90, 170),
+        Token.Name.Class:         (130, 170, 255) if dark else (  0,  90, 170),
+        Token.Name.Decorator:     (255, 184, 108) if dark else (150, 100,   0),
+        Token.Name.Tag:           (255, 121, 198) if dark else (170,  30, 130),
+        Token.Name.Attribute:     (130, 170, 255) if dark else (  0,  90, 170),
+        Token.Literal.String:     (166, 226, 130) if dark else ( 20, 130,  20),
+        Token.Literal.Number:     (255, 184, 108) if dark else (180,  90,   0),
+        Token.Comment:            (130, 132, 142) if dark else (130, 130, 130),
+        Token.Operator:           (255, 121, 198) if dark else (120,  40,  40),
+        Token.Error:              (255,  85,  85) if dark else (200,   0,   0),
+    })
 
-    return CODE_STYLES
+    _CODE_STYLES_CACHE[dark] = styles
+
+    return styles
 
 
-def _code_token_color(ttype):
+def _code_token_color(ttype, dark=False):
     """Walk a Pygments token type up its `.parent` chain until one is found
     in the style table — e.g. Token.Keyword.Declaration has no entry of its
     own, but its parent Token.Keyword does. The bare `Token` root is always
     in the table, so this always terminates."""
-    styles = _code_styles()
+    styles = _code_styles(dark)
     t = ttype
     while t not in styles:
         t = t.parent
@@ -372,7 +402,7 @@ def _get_code_lexer(lang):
     return None
 
 
-def _tokenize_lines(lexer, text):
+def _tokenize_lines(lexer, text, dark=False):
     """Tokenize `text` with `lexer` and regroup the token stream by source
     line, returning a list (one entry per line in `text.split("\\n")`) of
     `[(color, token_text), ...]` segments. A single token can itself span
@@ -382,7 +412,7 @@ def _tokenize_lines(lexer, text):
     try:
         lines = [[]]
         for ttype, value in lexer.get_tokens(text):
-            color = _code_token_color(ttype)
+            color = _code_token_color(ttype, dark)
             parts = value.split("\n")
             for i, part in enumerate(parts):
                 if part:
@@ -411,9 +441,42 @@ class ReportPDF:
     reference script does."""
 
 
-def make_pdf_class(accent):
+def make_pdf_class(accent, dark=False):
     from fpdf import FPDF
     from fpdf.enums import XPos, YPos
+
+    # Every render method below closes over these *lowercase* names instead
+    # of the module-level UPPERCASE constants — same mechanism already used
+    # for `accent`. Deliberately lowercase so there's no ambiguity with the
+    # module globals of the same name (Python would otherwise raise
+    # UnboundLocalError on any attempt to read-then-shadow a same-named
+    # global inside this function).
+    if dark:
+        c_page_bg       = C_PAGE_BG_DARK
+        c_h1            = C_H1_DARK
+        c_h2            = C_H2_DARK
+        c_text          = C_TEXT_DARK
+        c_muted         = C_MUTED_DARK
+        c_code_bg       = C_CODE_BG_DARK
+        c_code_fg       = C_CODE_FG_DARK
+        c_rule          = C_RULE_DARK
+        c_link          = C_LINK_DARK
+        c_table_head_bg = C_TABLE_HEAD_BG_DARK
+        c_row_base      = C_ROW_BASE_DARK
+        c_row_alt       = C_ROW_ALT_DARK
+    else:
+        c_page_bg       = None  # no fill needed — page defaults to white
+        c_h1            = C_H1
+        c_h2            = C_H2
+        c_text          = C_TEXT
+        c_muted         = C_MUTED
+        c_code_bg       = C_CODE_BG
+        c_code_fg       = C_CODE_FG
+        c_rule          = C_RULE
+        c_link          = C_LINK
+        c_table_head_bg = C_TABLE_HEAD_BG
+        c_row_base      = C_ROW_BASE
+        c_row_alt       = C_ROW_ALT
 
     class _ReportPDF(FPDF):
         def __init__(self, meta):
@@ -439,11 +502,21 @@ def make_pdf_class(accent):
             # fpdf2's markdown=True renderer turns [text](url) into a real
             # clickable link annotation, underlined by default — give it a
             # distinct color so it actually reads as a link, not plain text.
-            self.MARKDOWN_LINK_COLOR = (30, 90, 180)
+            self.MARKDOWN_LINK_COLOR = c_link
 
         # ── Header / Footer ───────────────────────────────────────────────
 
         def header(self):
+            # fpdf2 has no "page background color" setting — the dark theme
+            # fakes one by filling the whole page first, before anything
+            # else (including the title page's own drawing) gets a chance
+            # to draw on top of it. This runs even on page 1 (the title
+            # page), which is why it comes before the `self.page <= 1`
+            # early-return just below, not after it.
+            if c_page_bg is not None:
+                self.set_fill_color(*c_page_bg)
+                self.rect(0, 0, PAGE_W, self.h, style="F")
+
             if self.page <= 1:
                 return
             # Running header is one line by design (it repeats on every
@@ -455,7 +528,7 @@ def make_pdf_class(accent):
             while self.get_string_width(title) > CONTENT_W and size > 5:
                 size -= 0.5
                 self.set_font("DejaVu", size=size)
-            self.set_text_color(*C_MUTED)
+            self.set_text_color(*c_muted)
             self.cell(0, 6, title, new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(1)
 
@@ -463,11 +536,11 @@ def make_pdf_class(accent):
             if self.page <= 1:
                 return
             self.set_y(-14)
-            self.set_draw_color(*C_RULE)
+            self.set_draw_color(*c_rule)
             self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
             self.ln(1)
             self.set_font("DejaVu", size=8)
-            self.set_text_color(*C_MUTED)
+            self.set_text_color(*c_muted)
             self.cell(0, 6, f"Page {self.page - 1}", align="R",
                       new_x=XPos.RIGHT, new_y=YPos.TOP)
 
@@ -495,7 +568,7 @@ def make_pdf_class(accent):
                 self.set_font("DejaVu", style="B", size=size)
                 if self.get_string_width(title) <= CONTENT_W - 2:
                     break
-            self.set_text_color(*C_H1)
+            self.set_text_color(*c_h1)
             self.multi_cell(0, 10, title, align="C",
                             new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(2)
@@ -505,13 +578,13 @@ def make_pdf_class(accent):
                 # x that can run off both edges of the page — multi_cell
                 # wraps it within the content width instead.
                 self.set_font("DejaVu", size=14)
-                self.set_text_color(*C_MUTED)
+                self.set_text_color(*c_muted)
                 self.multi_cell(CONTENT_W, 8, self.meta["subtitle"],
                                 align="C", new_x=XPos.LEFT, new_y=YPos.NEXT)
                 self.ln(1)
 
             self.set_font("DejaVu", size=10)
-            self.set_text_color(*C_MUTED)
+            self.set_text_color(*c_muted)
             self.multi_cell(CONTENT_W, 6, f"Version {self.meta['version']}",
                             align="C", new_x=XPos.LEFT, new_y=YPos.NEXT)
 
@@ -522,11 +595,11 @@ def make_pdf_class(accent):
             # set_y(-18) doesn't trigger a phantom extra page
             self.set_auto_page_break(False)
             self.set_y(-18)
-            self.set_draw_color(*C_RULE)
+            self.set_draw_color(*c_rule)
             self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
             self.ln(2)
             self.set_font("DejaVu", size=8)
-            self.set_text_color(*C_MUTED)
+            self.set_text_color(*c_muted)
             if self.meta.get("vendor"):
                 self.multi_cell(CONTENT_W, 5, f"© {self.meta['vendor']}",
                                 align="C", new_x=XPos.LEFT, new_y=YPos.NEXT)
@@ -555,10 +628,10 @@ def make_pdf_class(accent):
             self.set_auto_page_break(False)
 
             self.set_font("DejaVu", style="B", size=12)
-            self.set_text_color(*C_H2)
+            self.set_text_color(*c_h2)
             self.cell(0, 7, "Contents", new_x=XPos.LEFT, new_y=YPos.NEXT)
 
-            self.set_draw_color(*C_RULE)
+            self.set_draw_color(*c_rule)
             self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
             self.ln(4)
 
@@ -567,48 +640,61 @@ def make_pdf_class(accent):
             # clear of the normal auto-page-break margin.
             toc_bottom_limit = self.h - 26
             row_h = 6.5 if len(self._toc_entries) <= 22 else 6.0
+            # Level-2 (subheading) entries indent under their nearest
+            # preceding level-1 (major heading) entry and use a slightly
+            # smaller base font, so the TOC visually nests them instead of
+            # listing every heading tier as flush-left equals.
+            indent_step = 7
 
-            for title, abs_page in self._toc_entries:
+            for level, title, abs_page in self._toc_entries:
                 display_page = abs_page - 1
                 y_row = self.get_y()
                 if y_row + row_h > toc_bottom_limit:
                     break  # ran out of room on page 1 — clip, don't overflow
 
+                indent = indent_step if level >= 2 else 0
+                base_size = 9 if level >= 2 else 10
+                x_start = MARGIN + indent
+
+                # Clicking anywhere on the row (title, dot leader, or page
+                # number) jumps straight to the page that heading lives on.
+                link_id = self.add_link(page=abs_page)
+
                 num_str = str(display_page)
-                self.set_font("DejaVu", size=10)
+                self.set_font("DejaVu", size=base_size)
                 num_w = self.get_string_width(num_str) + 2
-                title_max_w = CONTENT_W - num_w - 6
+                title_max_w = CONTENT_W - indent - num_w - 6
 
                 # Long entry titles shrink to fit their single-line slot
                 # rather than running into the dot-leader/page-number area.
-                size = 10
+                size = base_size
                 self.set_font("DejaVu", size=size)
                 while (self.get_string_width(title) > title_max_w
-                        and size > 7):
+                        and size > 6.5):
                     size -= 0.5
                     self.set_font("DejaVu", size=size)
 
-                self.set_text_color(*C_TEXT)
-                self.set_xy(MARGIN, y_row)
-                self.cell(title_max_w, row_h, title,
+                self.set_text_color(*(c_text if level == 1 else c_muted))
+                self.set_xy(x_start, y_row)
+                self.cell(title_max_w, row_h, title, link=link_id,
                           new_x=XPos.LEFT, new_y=YPos.TOP)
 
-                title_x_end = MARGIN + self.get_string_width(title) + 2
+                title_x_end = x_start + self.get_string_width(title) + 2
                 dot_gap = (PAGE_W - MARGIN - num_w) - title_x_end
                 if dot_gap > 3:
-                    self.set_font("DejaVu", size=10)
+                    self.set_font("DejaVu", size=base_size)
                     dot_w    = self.get_string_width(".")
                     n_dots   = max(0, int(dot_gap / (dot_w + 0.3)) - 1)
                     dots_str = " " + "." * n_dots
                     self.set_xy(title_x_end, y_row)
-                    self.set_text_color(*C_MUTED)
-                    self.cell(dot_gap, row_h, dots_str,
+                    self.set_text_color(*c_muted)
+                    self.cell(dot_gap, row_h, dots_str, link=link_id,
                               new_x=XPos.LEFT, new_y=YPos.TOP)
 
-                self.set_font("DejaVu", size=10)
+                self.set_font("DejaVu", size=base_size)
                 self.set_xy(PAGE_W - MARGIN - num_w, y_row)
-                self.set_text_color(*C_MUTED)
-                self.cell(num_w, row_h, num_str, align="R",
+                self.set_text_color(*c_muted)
+                self.cell(num_w, row_h, num_str, align="R", link=link_id,
                           new_x=XPos.LEFT, new_y=YPos.NEXT)
 
             self.set_auto_page_break(True, margin=22)
@@ -616,7 +702,7 @@ def make_pdf_class(accent):
 
         # ── Helpers ───────────────────────────────────────────────────────
 
-        def _text(self, txt, size=10, bold=False, color=C_TEXT, line_h=5.5):
+        def _text(self, txt, size=10, bold=False, color=c_text, line_h=5.5):
             self.set_font("DejaVu", style="B" if bold else "", size=size)
             self.set_text_color(*color)
             self.multi_cell(CONTENT_W, line_h, txt, markdown=True,
@@ -655,7 +741,7 @@ def make_pdf_class(accent):
             else:
                 self.ln(4)
 
-            self._toc_entries.append((text, self.page))
+            self._toc_entries.append((1, text, self.page))
 
             text_w = CONTENT_W - 7
             line_h = 7
@@ -674,7 +760,7 @@ def make_pdf_class(accent):
             self.rect(MARGIN, y0, 3, bar_h, style="F")
 
             self.set_xy(MARGIN + 7, y0)
-            self.set_text_color(*C_H1)
+            self.set_text_color(*c_h1)
             self.multi_cell(text_w, line_h, text, markdown=True,
                             new_x=XPos.LEFT, new_y=YPos.NEXT)
             self.ln(3)
@@ -695,7 +781,7 @@ def make_pdf_class(accent):
             if self.get_y() + needed_h > self.h - self.b_margin:
                 self.add_page()
 
-            self._toc_entries.append((text, self.page))
+            self._toc_entries.append((2, text, self.page))
 
             self.set_text_color(*accent)
             self.multi_cell(CONTENT_W, line_h, text, markdown=True,
@@ -708,20 +794,20 @@ def make_pdf_class(accent):
         def render_h3(self, text):
             self.ln(4)
             self.set_font("DejaVu", style="B", size=12)
-            self.set_text_color(*C_H2)
+            self.set_text_color(*c_h2)
             self.multi_cell(CONTENT_W, 7, text, markdown=True,
                             new_x=XPos.LEFT, new_y=YPos.NEXT)
-            self.set_draw_color(*C_RULE)
+            self.set_draw_color(*c_rule)
             self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
             self.ln(3)
 
         def render_p(self, text):
-            self._text(text, size=10, color=C_TEXT, line_h=5.5)
+            self._text(text, size=10, color=c_text, line_h=5.5)
             self.ln(1)
 
         def render_bullets(self, items):
             self.set_font("DejaVu", size=10)
-            self.set_text_color(*C_TEXT)
+            self.set_text_color(*c_text)
             indent = 6
             for item in items:
                 self.set_x(MARGIN + indent)
@@ -734,7 +820,7 @@ def make_pdf_class(accent):
 
         def render_numbered(self, items):
             self.set_font("DejaVu", size=10)
-            self.set_text_color(*C_TEXT)
+            self.set_text_color(*c_text)
             indent = 6
             for i, item in enumerate(items, 1):
                 self.set_x(MARGIN + indent)
@@ -750,7 +836,7 @@ def make_pdf_class(accent):
             self.ln(2)
             if lang:
                 self.set_font("DejaVu", style="I", size=8)
-                self.set_text_color(*C_MUTED)
+                self.set_text_color(*c_muted)
                 self.cell(0, 5, lang, new_x=XPos.LEFT, new_y=YPos.NEXT)
 
             lines    = text.split("\n")
@@ -762,7 +848,7 @@ def make_pdf_class(accent):
             # tag — None (no tag, unrecognized language, or Pygments itself
             # unavailable) means "render in flat color", never an error.
             lexer = _get_code_lexer(lang)
-            tokenized = _tokenize_lines(lexer, text) if lexer else None
+            tokenized = _tokenize_lines(lexer, text, dark) if lexer else None
 
             # Code shouldn't reflow (it's monospace, indentation-sensitive),
             # but a single long line (a long URL, an unbroken string) can
@@ -788,8 +874,8 @@ def make_pdf_class(accent):
             if self.get_y() + block_h > self.h - self.b_margin:
                 self.add_page()
 
-            self.set_fill_color(*C_CODE_BG)
-            self.set_draw_color(*C_RULE)
+            self.set_fill_color(*c_code_bg)
+            self.set_draw_color(*c_rule)
             x, y = MARGIN, self.get_y()
             self.rect(x, y, CONTENT_W, block_h, style="FD")
             self.set_xy(x + pad, y + pad)
@@ -797,7 +883,7 @@ def make_pdf_class(accent):
             for i, line in enumerate(lines):
                 row_y = y + pad + i * line_h
                 self.set_xy(x + pad, row_y)
-                segments = tokenized[i] if tokenized else [(C_CODE_FG, line)]
+                segments = tokenized[i] if tokenized else [(c_code_fg, line)]
                 for color, token_text in segments:
                     self.set_text_color(*color)
                     self.cell(self.get_string_width(token_text), line_h,
@@ -822,8 +908,8 @@ def make_pdf_class(accent):
             y0 = self.get_y()
             x0 = MARGIN
             for j, h in enumerate(headers):
-                self.set_fill_color(*C_H2)
-                self.set_draw_color(*C_RULE)
+                self.set_fill_color(*c_table_head_bg)
+                self.set_draw_color(*c_rule)
                 self.rect(x0, y0, col_w[j], header_h, style="FD")
                 self.set_xy(x0 + 1, y0 + 1)
                 self.multi_cell(col_w[j] - 2, 5, h, markdown=True,
@@ -832,7 +918,7 @@ def make_pdf_class(accent):
             self.set_y(y0 + header_h)
 
             self.set_font("DejaVu", size=9)
-            self.set_text_color(*C_TEXT)
+            self.set_text_color(*c_text)
             fill = False
             for row in rows:
                 cells = list(row) + [""] * (n_cols - len(row))
@@ -849,9 +935,9 @@ def make_pdf_class(accent):
                 y0 = self.get_y()
                 x0 = MARGIN
                 for j in range(n_cols):
-                    bg = (245, 245, 245) if fill else (255, 255, 255)
+                    bg = c_row_alt if fill else c_row_base
                     self.set_fill_color(*bg)
-                    self.set_draw_color(*C_RULE)
+                    self.set_draw_color(*c_rule)
                     self.rect(x0, y0, col_w[j], row_h, style="FD")
                     self.set_xy(x0 + 2, y0 + 2)
                     self.multi_cell(col_w[j] - 4, 5, cells[j], markdown=True,
@@ -943,6 +1029,9 @@ def parse_args():
                         help="Copyright line vendor name")
     parser.add_argument("--accent", default=None,
                         help='Accent color as "R,G,B", e.g. "30,80,180"')
+    parser.add_argument("--dark", action="store_true", default=None,
+                        help="Render using the dark color theme "
+                             "(also settable via frontmatter `theme: dark`)")
 
     return parser.parse_args()
 
@@ -992,15 +1081,21 @@ def main():
         else (None, 0, 0)
     )
 
+    # --dark wins if passed; otherwise fall back to frontmatter `theme:`.
+    dark = args.dark if args.dark is not None else (
+        frontmatter.get("theme", "").strip().lower() == "dark"
+    )
+
     print("=" * 55)
     print("report-to-pdf — Markdown -> PDF")
     print(f"  Input   : {input_path}")
     print(f"  Output  : {output_path}")
     print(f"  Title   : {meta['title']}")
+    print(f"  Theme   : {'dark' if dark else 'light'}")
     print(f"  Blocks  : {len(blocks)}")
     print("=" * 55)
 
-    PDFClass = make_pdf_class(accent)
+    PDFClass = make_pdf_class(accent, dark)
     pdf = PDFClass(meta)
     pdf.title_page(logo_buf, logo_w, logo_h)
     pdf.add_page()

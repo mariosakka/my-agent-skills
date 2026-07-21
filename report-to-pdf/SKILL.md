@@ -1,6 +1,6 @@
 ---
 name: report-to-pdf
-description: Render a Markdown report (headings, paragraphs, bullet/numbered lists, fenced code blocks with real Pygments syntax highlighting, pipe tables, bold/italic/inline-code, optional YAML-ish frontmatter) into a polished, deterministically-styled PDF — title page with brand accent bar and optional logo, running header/footer, auto-generated back-filled Table of Contents, a three-tier heading hierarchy (major/subheading/tertiary), and zebra-striped bordered tables. Use when the user wants to turn a markdown review/report/writeup into a client- or mentor-ready PDF, asks to "export this markdown as a PDF", "make this report look professional", "convert my .md to PDF", or wants the *same* fixed layout every time (no LLM-improvised formatting) for repeatable, brand-consistent document output. Same visual language as the ColeteOnline Magento user-guide PDF generator, just driven by parsing a real .md file instead of a hand-authored Python content list.
+description: Render a Markdown report (headings, paragraphs, bullet/numbered lists, fenced code blocks with real Pygments syntax highlighting, pipe tables, bold/italic/inline-code, optional YAML-ish frontmatter) into a polished, deterministically-styled PDF — title page with brand accent bar and optional logo, running header/footer, an auto-generated back-filled and indented Table of Contents with real clickable jump-to-page links, a three-tier heading hierarchy (major/subheading/tertiary), zebra-striped bordered tables, and an optional dark theme. Use when the user wants to turn a markdown review/report/writeup into a client- or mentor-ready PDF, asks to "export this markdown as a PDF", "make this report look professional", "convert my .md to PDF", "make it dark mode/dark theme", or wants the *same* fixed layout every time (no LLM-improvised formatting) for repeatable, brand-consistent document output. Same visual language as the ColeteOnline Magento user-guide PDF generator, just driven by parsing a real .md file instead of a hand-authored Python content list.
 allowed-tools: Bash(python3:*) Read
 ---
 
@@ -41,6 +41,9 @@ Options:
 - `--accent "R,G,B"` — override the accent color used for the title
   page's top bar and section-heading accent bars (default
   `220,50,50`, ColeteOnline red).
+- `--dark` — render with the dark color theme instead of the default
+  light one (also settable via frontmatter `theme: dark`; `--dark`
+  wins if both are present). See "Dark theme" below.
 
 The script auto-installs `fpdf2`, `Pillow`, and `Pygments` via
 `pip install --user` if any import fails, mirroring the reference
@@ -140,6 +143,48 @@ The monospace shrink-to-fit logic (a code line too wide for the page
 shrinks the whole block's font uniformly rather than overflowing) is
 unaffected by highlighting — it measures plain character widths,
 which don't change based on what color a token ends up drawn in.
+
+## Dark theme
+
+Pass `--dark`, or set `theme: dark` in frontmatter, to render the
+whole document in a dark theme instead of the default light one.
+Every color in the document flips to a dark-appropriate counterpart —
+not just the code blocks:
+
+- The page background itself is filled dark (fpdf2 has no native
+  "page background color" setting, so this is done by filling the
+  full page in the `header()` hook, before anything else draws on
+  top of it — including on the title page).
+- Body text, headings (all three tiers), muted/footer text, rule
+  lines, table zebra-striping, and the running header/footer all use
+  a separate dark-mode color set, not just an inverted light one.
+- Syntax highlighting uses its own dark-mode palette (brighter
+  pinks/greens/blues chosen for contrast against the dark code
+  background), not the light-mode colors dimmed down.
+- Link color (both `[text](url)` markdown links and the TOC's
+  jump-to-page links) switches to a lighter blue that stays readable
+  on a dark background.
+
+The `--accent` color (the top bar, major-heading left bar, and
+subheading text/underline) is used as-is in both themes — pick one
+that works against both a white and a near-black background if you
+plan to generate the same report in both themes, or override
+`--accent` per theme if not.
+
+## Table of Contents
+
+The back-filled TOC (see "How this renders" above) reflects the same
+three-tier heading hierarchy as the body: major (`#`) headings are
+flush-left and bold; subheadings (`##`) are indented under them, in a
+slightly smaller, muted font — so the TOC visually nests subsections
+under their section instead of listing every heading tier as flush-
+left equals. Tertiary (`###`+) headings never appear in the TOC at
+all (see the Markdown-conventions table above).
+
+Every TOC entry — the title, the dot leader, and the page number — is
+a real clickable link (via fpdf2's `add_link()`/`page=` binding, not
+just styled text) that jumps straight to the page that heading lives
+on when clicked in a PDF viewer.
 
 ## Limitations (v1)
 
@@ -245,6 +290,25 @@ schema block (confirming the `prisma` → `graphql` alias renders
 `@id`/`@default(...)`/`@relation(...)`/`@map(...)` attributes in the
 decorator color, since Prisma's `@attribute(...)` syntax and
 GraphQL's `@directive(...)` syntax tokenize almost identically).
+
+The dark theme, TOC indentation, and TOC links were all verified in
+one further pass against the same real report, rendered twice
+(`--dark` and default light) with zero errors either way. Confirmed
+by rasterizing both title pages and a content page at 120 DPI: the
+dark page background fills correctly on the title page and every
+content page, all three heading tiers stay readable and visually
+distinct against the dark background, code blocks use the dark
+syntax palette, and `[text](url)` links use the lighter dark-mode
+link color. TOC indentation (level-2 entries indented and in a
+smaller, muted font versus flush-left bold level-1 entries) was
+confirmed visually. TOC links were verified programmatically, not
+just visually: `pypdf` found 96 `/Link` annotations with real
+`/Dest` entries on the TOC page, and resolving those destinations to
+actual page objects confirmed the first entries point to pages 3, 3,
+3 (title, dot leader, and page number of the same row, correctly
+sharing one link target), then 6, 7, 10, ... — 18 distinct target
+pages in total, strictly increasing in document order, exactly as
+expected.
 
 Also exercised with a synthetic `.md` covering frontmatter (including
 `accent` override), a pipe table with a long wrapped cell, a fenced
