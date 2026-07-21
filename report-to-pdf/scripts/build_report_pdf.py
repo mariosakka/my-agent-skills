@@ -17,8 +17,9 @@ Usage:
     python3 build_report_pdf.py report.md --vendor "ColeteOnline SRL" \
         --title "Custom Title" --accent "30,80,180"
 
-Dependencies: fpdf2 (import name `fpdf`), Pillow (import name `PIL`).
-Both are checked/auto-installed (best-effort) in main().
+Dependencies: fpdf2 (import name `fpdf`), Pillow (import name `PIL`),
+Pygments (import name `pygments`, for fenced-code syntax highlighting).
+All three are checked/auto-installed (best-effort) in main().
 """
 
 import argparse
@@ -38,6 +39,12 @@ C_MUTED   = (120, 120, 120)
 C_CODE_BG = (245, 245, 245)
 C_CODE_FG = ( 50,  50, 160)
 C_RULE    = (210, 210, 210)
+
+# Syntax-highlight palette — chosen against the light C_CODE_BG background,
+# not any particular Pygments theme. Keyed by Pygments token type; a token
+# not listed here is resolved by walking up `.parent` until one matches,
+# terminating at the bare `Token` root (see `_code_token_color`).
+CODE_STYLES = None  # populated lazily once pygments.token.Token is importable
 
 # ── Layout ────────────────────────────────────────────────────────────────────
 
@@ -280,6 +287,121 @@ def load_logo_png(path):
         print(f"  warning: logo not loaded: {exc}")
 
         return None, 0, 0
+
+
+# ── Syntax highlighting (fenced code blocks) ──────────────────────────────────
+#
+# Real tokenization via Pygments, not a hand-rolled regex highlighter — code
+# is exactly the kind of thing a small ad hoc parser gets subtly wrong (string
+# escapes, nested comments, template literals). Falls back to flat, single-
+# color rendering (the pre-highlighting behavior) whenever a language tag is
+# missing, unrecognized by Pygments, or Pygments itself isn't importable —
+# highlighting is a bonus, never a hard requirement to render a code block.
+
+def _code_styles():
+    """Build (lazily, once Pygments is known importable) the token-type ->
+    RGB color table used by `_code_token_color`."""
+    global CODE_STYLES
+    if CODE_STYLES is not None:
+        return CODE_STYLES
+
+    from pygments.token import Token
+
+    CODE_STYLES = {
+        Token:                    C_CODE_FG,        # fallback: plain code color
+        Token.Keyword:            (170,  30, 130),
+        Token.Name.Builtin:       (  0, 110, 110),
+        Token.Name.Builtin.Pseudo:(  0, 110, 110),
+        Token.Name.Function:      (  0,  90, 170),
+        Token.Name.Class:         (  0,  90, 170),
+        Token.Name.Decorator:     (150, 100,   0),
+        Token.Name.Tag:           (170,  30, 130),
+        Token.Name.Attribute:     (  0,  90, 170),
+        Token.Literal.String:     ( 20, 130,  20),
+        Token.Literal.Number:     (180,  90,   0),
+        Token.Comment:            (130, 130, 130),
+        Token.Operator:           (120,  40,  40),
+        Token.Punctuation:        C_CODE_FG,
+        Token.Error:              (200,   0,   0),
+    }
+
+    return CODE_STYLES
+
+
+def _code_token_color(ttype):
+    """Walk a Pygments token type up its `.parent` chain until one is found
+    in the style table — e.g. Token.Keyword.Declaration has no entry of its
+    own, but its parent Token.Keyword does. The bare `Token` root is always
+    in the table, so this always terminates."""
+    styles = _code_styles()
+    t = ttype
+    while t not in styles:
+        t = t.parent
+
+    return styles[t]
+
+
+def _get_code_lexer(lang):
+    """Return a Pygments lexer for `lang`, or None if unavailable/unknown —
+    None means "render this block in flat, unhighlighted color", never an
+    error. A handful of common aliases are covered for tags people actually
+    write in fenced blocks that don't match a Pygments lexer name exactly."""
+    if not lang:
+        return None
+
+    try:
+        from pygments.lexers import get_lexer_by_name
+        from pygments.util import ClassNotFound
+    except ImportError:
+        return None
+
+    aliases = {
+        "ts": "typescript", "tsx": "typescript",
+        "js": "javascript", "jsx": "javascript",
+        "sh": "bash", "shell": "bash", "zsh": "bash",
+        "yml": "yaml", "prisma": "graphql",  # closest built-in match
+    }
+    for name in (lang, aliases.get(lang.lower())):
+        if not name:
+            continue
+        try:
+            return get_lexer_by_name(name, stripall=False)
+        except ClassNotFound:
+            continue
+
+    return None
+
+
+def _tokenize_lines(lexer, text):
+    """Tokenize `text` with `lexer` and regroup the token stream by source
+    line, returning a list (one entry per line in `text.split("\\n")`) of
+    `[(color, token_text), ...]` segments. A single token can itself span
+    multiple lines (block comments, template literals) and is split at each
+    embedded newline. Returns None on any mismatch or failure — callers
+    should treat that as "fall back to flat rendering", not an error."""
+    try:
+        lines = [[]]
+        for ttype, value in lexer.get_tokens(text):
+            color = _code_token_color(ttype)
+            parts = value.split("\n")
+            for i, part in enumerate(parts):
+                if part:
+                    lines[-1].append((color, part))
+                if i < len(parts) - 1:
+                    lines.append([])
+
+        # Pygments' get_tokens() ends the stream with a forced trailing
+        # newline, which produces one extra empty trailing line entry here.
+        if lines and not lines[-1]:
+            lines.pop()
+
+        expected = len(text.split("\n"))
+        if len(lines) != expected:
+            return None  # tokenizer disagreed on line count — don't guess
+
+        return lines
+    except Exception:
+        return None
 
 
 # ── PDF class ─────────────────────────────────────────────────────────────────
@@ -636,12 +758,19 @@ def make_pdf_class(accent):
             avail_w  = CONTENT_W - pad * 2
             base_size = 8.5
 
+            # Real tokenization via Pygments, keyed off the fence's language
+            # tag — None (no tag, unrecognized language, or Pygments itself
+            # unavailable) means "render in flat color", never an error.
+            lexer = _get_code_lexer(lang)
+            tokenized = _tokenize_lines(lexer, text) if lexer else None
+
             # Code shouldn't reflow (it's monospace, indentation-sensitive),
             # but a single long line (a long URL, an unbroken string) can
             # otherwise run straight past the box border and over whatever
             # follows. Measure the widest line and shrink the whole block's
-            # font uniformly — never per-line, or the monospace grid breaks —
-            # so everything fits within the content width.
+            # font uniformly — never per-line, or the monospace grid breaks,
+            # and highlighting colors don't affect character width — so
+            # everything fits within the content width.
             self.set_font("DejaVuMono", size=base_size)
             max_line_w = max(
                 (self.get_string_width(line) for line in lines), default=0)
@@ -661,14 +790,19 @@ def make_pdf_class(accent):
 
             self.set_fill_color(*C_CODE_BG)
             self.set_draw_color(*C_RULE)
-            self.set_text_color(*C_CODE_FG)
             x, y = MARGIN, self.get_y()
             self.rect(x, y, CONTENT_W, block_h, style="FD")
             self.set_xy(x + pad, y + pad)
-            for line in lines:
-                self.set_x(x + pad)
-                self.cell(avail_w, line_h, line,
-                          new_x=XPos.LEFT, new_y=YPos.NEXT)
+
+            for i, line in enumerate(lines):
+                row_y = y + pad + i * line_h
+                self.set_xy(x + pad, row_y)
+                segments = tokenized[i] if tokenized else [(C_CODE_FG, line)]
+                for color, token_text in segments:
+                    self.set_text_color(*color)
+                    self.cell(self.get_string_width(token_text), line_h,
+                              token_text, new_x=XPos.RIGHT, new_y=YPos.TOP)
+            self.set_xy(x, y + pad + len(lines) * line_h)
             self.ln(4)
 
         def render_table(self, headers, rows):
@@ -780,6 +914,10 @@ def ensure_dependencies():
         import PIL  # noqa: F401
     except ImportError:
         missing.append("Pillow")
+    try:
+        import pygments  # noqa: F401
+    except ImportError:
+        missing.append("Pygments")
 
     if missing:
         print(f"Installing missing dependencies: {', '.join(missing)}…")

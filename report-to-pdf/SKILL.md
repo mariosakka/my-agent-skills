@@ -1,6 +1,6 @@
 ---
 name: report-to-pdf
-description: Render a Markdown report (headings, paragraphs, bullet/numbered lists, fenced code blocks, pipe tables, bold/italic/inline-code, optional YAML-ish frontmatter) into a polished, deterministically-styled PDF — title page with brand accent bar and optional logo, running header/footer, auto-generated back-filled Table of Contents, left-accent-bar section headings, shaded/bordered code blocks, and zebra-striped bordered tables. Use when the user wants to turn a markdown review/report/writeup into a client- or mentor-ready PDF, asks to "export this markdown as a PDF", "make this report look professional", "convert my .md to PDF", or wants the *same* fixed layout every time (no LLM-improvised formatting) for repeatable, brand-consistent document output. Same visual language as the ColeteOnline Magento user-guide PDF generator, just driven by parsing a real .md file instead of a hand-authored Python content list.
+description: Render a Markdown report (headings, paragraphs, bullet/numbered lists, fenced code blocks with real Pygments syntax highlighting, pipe tables, bold/italic/inline-code, optional YAML-ish frontmatter) into a polished, deterministically-styled PDF — title page with brand accent bar and optional logo, running header/footer, auto-generated back-filled Table of Contents, a three-tier heading hierarchy (major/subheading/tertiary), and zebra-striped bordered tables. Use when the user wants to turn a markdown review/report/writeup into a client- or mentor-ready PDF, asks to "export this markdown as a PDF", "make this report look professional", "convert my .md to PDF", or wants the *same* fixed layout every time (no LLM-improvised formatting) for repeatable, brand-consistent document output. Same visual language as the ColeteOnline Magento user-guide PDF generator, just driven by parsing a real .md file instead of a hand-authored Python content list.
 allowed-tools: Bash(python3:*) Read
 ---
 
@@ -42,10 +42,10 @@ Options:
   page's top bar and section-heading accent bars (default
   `220,50,50`, ColeteOnline red).
 
-The script auto-installs `fpdf2` and `Pillow` via
-`pip install --user` if either import fails, mirroring the reference
-script's Pillow auto-install. Both were verified importable and the
-script was run end-to-end during development (see Testing below).
+The script auto-installs `fpdf2`, `Pillow`, and `Pygments` via
+`pip install --user` if any import fails, mirroring the reference
+script's Pillow auto-install. All three were verified importable and
+the script was run end-to-end during development (see Testing below).
 
 ## Markdown conventions it expects
 
@@ -81,7 +81,7 @@ Body Markdown, and how each element renders:
 | Paragraph text                     | Justified-left body paragraph, 10pt. |
 | `- item` / `* item`                | Bullet list (•). |
 | `1. item`                          | Numbered list. |
-| ```` ```lang ... ``` ````          | Shaded, bordered monospace code block; the language tag (if present) is printed as a small italic label above the block. No syntax highlighting. |
+| ```` ```lang ... ``` ````          | Shaded, bordered monospace code block; the language tag (if present) is printed as a small italic label above the block, and drives real Pygments syntax highlighting — see below. |
 | `\| a \| b \|` with a `---` separator row | Bordered table, bold header row, zebra-striped body rows, word-wrapped cells, equal column widths. |
 | `---` / `***` / `___` on its own line | Vertical spacer (not a page break). |
 | `**bold**` | Real bold text, via fpdf2's built-in `markdown=True` renderer. |
@@ -96,6 +96,50 @@ headings and table cells. Fenced code blocks are the one exception —
 their content is rendered completely literally (no markdown parsing),
 so a code sample containing literal `**`, `__`, or `[]()` won't be
 misinterpreted.
+
+## Syntax highlighting
+
+Fenced code blocks are tokenized with real Pygments lexers (not a
+hand-rolled regex highlighter — code is exactly the kind of thing a
+small ad hoc parser gets subtly wrong: string escapes, nested
+comments, template literals). The language tag on the fence
+(```` ```typescript ````, ```` ```sql ````, ```` ```python ````, ...)
+selects the lexer; a handful of common aliases are normalized (`ts`/
+`tsx` → `typescript`, `js`/`jsx` → `javascript`, `sh`/`shell`/`zsh` →
+`bash`, `yml` → `yaml`, `prisma` → `graphql` — the closest built-in
+lexer, and a good match in practice since Prisma's `@attribute(...)`
+syntax and GraphQL's `@directive(...)` syntax tokenize almost
+identically).
+
+Highlighting is a bonus, never a hard requirement to render a code
+block — a missing language tag, a language Pygments doesn't
+recognize (even after the alias table), or Pygments itself not being
+importable all fall back to the exact pre-highlighting behavior: the
+whole block in one flat color, no crash, no missing content.
+
+Color palette (chosen for readability against the code block's light
+gray background, not tied to any particular Pygments theme):
+
+| Token category | Color |
+|---|---|
+| Keywords (`interface`, `async`, `const`, `NOT NULL`, type keywords like `string`/`number`) | Magenta |
+| Strings | Green |
+| Numbers | Brown/orange |
+| Comments | Gray |
+| Function/class names, decorators/attributes (`@map`, `@relation`) | Blue / brown |
+| Builtins (`Promise`, etc.) | Teal |
+| Everything else (identifiers, punctuation, operators) | The base code color |
+
+A token type with no exact entry in the palette resolves by walking
+up Pygments' token-type hierarchy (e.g. `Keyword.Declaration` has no
+entry of its own, but its parent `Keyword` does) until a match is
+found — the bare `Token` root always matches, so this never fails to
+resolve to *some* color.
+
+The monospace shrink-to-fit logic (a code line too wide for the page
+shrinks the whole block's font uniformly rather than overflowing) is
+unaffected by highlighting — it measures plain character widths,
+which don't change based on what color a token ends up drawn in.
 
 ## Limitations (v1)
 
@@ -135,11 +179,17 @@ top-level sections, ~24 `#`/`##`-level headings, dozens of fenced
 ```typescript``` code blocks including some with very long single
 lines — long GitHub URLs as markdown links, long TypeScript union
 types — bullet lists, a multi-row table, and a long two-line-wrapping
-subtitle): produced a clean 32-page, 155KB PDF. Verified with
+subtitle, and — after syntax highlighting was added — `typescript`,
+`prisma`, and `sql` code blocks totalling dozens of highlighted
+snippets): produced a clean 32-page, 182KB PDF. Verified with
 `pdfinfo`, `pdftotext -layout`, and by rasterizing individual pages
-to PNG (`pdftoppm`) for visual inspection, plus programmatic link
-verification via `pypdf` (96 real `/Link` annotations found, each
-with the correct GitHub URI).
+to PNG at both 120 and 300 DPI (`pdftoppm`) for visual inspection —
+including a pixel-level crop confirming `interface`/`string`/`number`
+render in the keyword color, not the default text color, resolving an
+ambiguity that was hard to judge at 120 DPI alone — plus programmatic
+link verification via `pypdf` (96 real `/Link` annotations found,
+each with the correct GitHub URI) and a direct unit-level check of
+`_code_token_color()` against several Pygments token types.
 
 This same real-world test caught and fixed four genuine rendering
 bugs during development (**do not reintroduce these**):
@@ -186,6 +236,15 @@ bugs during development (**do not reintroduce these**):
    the original bold+gray+rule tertiary treatment. This also made
    subheadings look meaningfully different from major headings, not
    just a smaller copy of the same style.
+
+Syntax highlighting itself was verified against three real code
+blocks from that same report: a `typescript` route handler (keywords,
+strings, a comment, all correctly colored), a `sql` migration
+fragment (`ENUM(...)`, `NOT NULL`, string literals), and a `prisma`
+schema block (confirming the `prisma` → `graphql` alias renders
+`@id`/`@default(...)`/`@relation(...)`/`@map(...)` attributes in the
+decorator color, since Prisma's `@attribute(...)` syntax and
+GraphQL's `@directive(...)` syntax tokenize almost identically).
 
 Also exercised with a synthetic `.md` covering frontmatter (including
 `accent` override), a pipe table with a long wrapped cell, a fenced
