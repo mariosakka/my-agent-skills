@@ -179,10 +179,10 @@ To read the content of an existing page, use the Read tool directly on the file:
 
 ```
 # Global pages
-~/.desk/global/pages/<name>.desk
+~/.desk/global/pages/<book-slug>/<name>.desk
 
 # Workspace pages
-~/.desk/workspaces/<workspace-name>/pages/<name>.desk
+~/.desk/workspaces/<workspace-name>/pages/<book-slug>/<name>.desk
 ```
 
 Use `list_pages` (with `scope: "global"` or `scope: "workspace"`) to discover page names first, then read the file at the path above.
@@ -198,9 +198,13 @@ Before creating the desk page or doing anything else, **tell the user how you pl
 
 Keep it short — a few bullet points, not a wall of text. The goal is for the user to be able to say "yes that makes sense" or "also check X" before you start.
 
-## After inspecting any PR — always create a desk page
+## After inspecting any PR — always add a page to the PR reviews book
 
-After reading or inspecting a PR, **always create a desk page for it without waiting to be asked.** Fetch the PR and its source issue in parallel first, then create the page via `mcp__vscode-desk__create_page`. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
+After reading or inspecting a PR, **always add a page for it to the "PR reviews" book without waiting to be asked** — never create a standalone page. `create_page` requires `filename` in `bookSlug/page.desk` format; standalone pages are not supported.
+
+1. Call `mcp__vscode-desk__list_books` first to find the PR reviews book's slug (e.g. `pr-reviews`). If it doesn't exist yet, create it once with `mcp__vscode-desk__create_book` (title "PR reviews") and reuse that slug for every subsequent PR page — do not create a new book per PR.
+2. Fetch the PR and its source issue in parallel, then create the page via `mcp__vscode-desk__create_page` with `filename: "<book-slug>/pr-{NUMBER}-{kebab-slug}.desk"`.
+3. Read the page template first (`mcp__vscode-desk__get_page_template`) to understand available CSS classes.
 
 **Required sections (in this order):**
 
@@ -214,7 +218,7 @@ After reading or inspecting a PR, **always create a desk page for it without wai
 
 5. **What's still open** (`icon: 🔮`) — Only include this section if the source issue is still open or if the PR is a partial fix. List remaining acceptance criteria and link back to the issue.
 
-**Naming convention:** `pr-{NUMBER}-{kebab-slug}.desk`
+**Naming convention:** page filename `pr-{NUMBER}-{kebab-slug}.desk` inside the PR reviews book (e.g. `pr-reviews/pr-1099-order-address-validation.desk`) — never a standalone page.
 
 **Eyebrow:** `Fix · {Layer} · {Feature}` (e.g. `Fix · Client · Tickets`)
 
