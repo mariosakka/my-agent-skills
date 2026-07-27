@@ -54,16 +54,30 @@ Every **focus** item that references a PR, issue, or commit must include its lin
 
 Do not ask for links on `blockers` or `help` items (they normally don't reference a PR/issue).
 
+## Logging a completed item — ALWAYS add to BOTH logs
+
+When you log something the user **did** (a `focus` item — a PR, fix, review, task completed), you MUST add it to **both** the daily log AND the weekly log, in the same turn. Not one or the other — both. A completed item belongs in today's EOD *and* accumulates toward the Friday weekly, so run the `add` twice:
+
+    ~/.desk/daily-log  add focus "<text>"
+    ~/.desk/weekly-log add focus "<text>"
+
+This is mandatory and easy to forget — if you added a focus item to only one log, you are not done. The only exceptions:
+
+- The user explicitly scopes it to one log ("just the weekly", "only EOD").
+- `blockers` / `help` items — these are transient day-state, so they go to the **daily log only** unless the user says otherwise.
+
 ## Which script to use
 
 | Situation | Script |
 |---|---|
-| EOD | `~/.desk/daily-log` |
-| Friday weekly report | `~/.desk/weekly-log` |
-| Mid-week item worth noting for weekly | `~/.desk/weekly-log` |
+| A completed item (focus) | **BOTH** `~/.desk/daily-log` and `~/.desk/weekly-log` |
+| A blocker / help-needed | `~/.desk/daily-log` only |
+| EOD send | `~/.desk/daily-log` |
+| Friday weekly send | `~/.desk/weekly-log` |
 
 ## Rules
 
+- A completed (`focus`) item goes to **both** logs — see "Logging a completed item". Adding it to only one is a bug.
 - NEVER edit `~/.local/share/desk-logs/daily-log.json` or `~/.local/share/desk-logs/weekly-log.json` directly
 - Always run `show` before sending and present the output to the user for confirmation
 - Run `~/.desk/daily-log clear` after the EOD message is confirmed sent
