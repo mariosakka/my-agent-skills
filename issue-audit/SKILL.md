@@ -50,14 +50,28 @@ Each candidate in the output JSON has: `number`, `title`, `url`, `labels`,
 
 ## Phase 2 — Validate each candidate (agent judgment)
 
+**Sync first — always.** Run `git fetch origin` (or `--all` in a
+multi-remote setup) before reading any file or `git log`. The local
+checkout can be behind the remote default branch (`development` for
+platform) even when it looks clean — a stale checkout means "the code
+still matches" is a claim about an old snapshot, not the repo. Check with
+`git rev-list --left-right --count origin/<branch>...<branch>`; if it
+reports anything on the left, the local branch is behind. Read files and
+run `git log`/`git log -S` against `origin/<branch>` (e.g.
+`git show origin/development:<path>`, `git log origin/development -- <path>`),
+not the working tree, so a feature branch or a behind-by-N checkout can't
+silently produce a wrong verdict.
+
 For every candidate, answer two independent questions, then give a verdict.
 Do this per-issue — don't batch-skim titles and guess.
 
 **1. Is it still accurate against the current codebase?**
 - Read the issue body for the files/behavior/error it describes.
-- Read those files as they exist now (`Read`/`Grep`), not from memory.
-- Check `git log -- <path>` / `git log --oneline -S"<symbol>" -- <path>` for
-  commits touching that area since the issue was filed (`createdAt`).
+- Read those files as they exist at `origin/<branch>` (`Read`/`Grep` the
+  working tree only after confirming step above that it's not behind, or
+  use `git show origin/<branch>:<path>` directly), not from memory.
+- Check `git log origin/<branch> -- <path>` / `git log --oneline -S"<symbol>" origin/<branch> -- <path>`
+  for commits touching that area since the issue was filed (`createdAt`).
 - A commit touching the area is not proof it's fixed — read the diff/current
   code and confirm the described symptom is actually gone or actually still
   present.

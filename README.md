@@ -40,6 +40,7 @@ SKIP_PLATFORMS="gemini copilot" bash ~/.my-agent-skills/install.sh
 | [`homepage`](homepage/SKILL.md) | Manages the personal study hub (`index.html`) — add/remove guides and bookmarks |
 | [`humanizer`](humanizer/SKILL.md) | Removes AI-writing patterns from text to make it sound natural |
 | [`issue-audit`](issue-audit/SKILL.md) | Fetches approved+unassigned issues (script) and validates each for staleness/overlap (agent) |
+| [`pr-audit`](pr-audit/SKILL.md) | Fetches Mario's in-flight PRs (assigned/backing-issue) and PRs he owes a review on, with draft/review-history status |
 | [`slack-work-communication`](slack-work-communication/SKILL.md) | Sends structured Slack status messages for work events |
 
 ---
