@@ -17,7 +17,7 @@ Channel IDs are stored in `config/channels.sh` — source it rather than hardcod
 
 ```bash
 source ~/.my-agent-skills/slack-work-communication/config/channels.sh
-# Now use: $SLACK_ZDEV_STATUS for #zdev-status
+# Now use: $SLACK_ZDEV_STATUS for #zdev-status, $SLACK_ZDEV_WEEKLY for #zdev-weekly
 ```
 
 ## Overview
@@ -51,6 +51,7 @@ Activate when the user describes any of these:
 |---|---|---|
 | SOD | #zdev-status | No |
 | EOD | #zdev-status | No |
+| Weekly | #zdev-weekly | No |
 | Late arrival | #zdev-status | No |
 | Early departure (planned) | #zdev-status | Yes |
 | Early departure (urgent) | #zdev-status | Yes |
@@ -58,6 +59,8 @@ Activate when the user describes any of these:
 | Review ready | #zdev-general | No |
 | Deploy | #zdev-general | No |
 | Part-time schedule | #zdev-status | No |
+
+EOD always goes to #zdev-status only — never merge it into or send it to #zdev-weekly. Weekly always goes to #zdev-weekly only — never #zdev-status.
 
 ## Log Integration
 
@@ -151,6 +154,8 @@ Always show this before sending anything:
 Trimit? (da / nu / modifică)
 ```
 
+For weekly, the confirmation block header is `[#zdev-weekly]` instead of `[#zdev-status]`.
+
 - **da** → send all messages via Slack MCP
 - **nu** → cancel, send nothing
 - **modifică [what]** → adjust that message, re-show confirmation block
@@ -174,6 +179,7 @@ Use the hardcoded channel IDs below — do NOT search for channels, searching re
 | Channel | channel_id |
 |---|---|
 | #zdev-status | `C0B78TRCQDD` |
+| #zdev-weekly | `C0B0A0C3MB2` |
 
 Always use `channel_id`, never the channel name string.
 
