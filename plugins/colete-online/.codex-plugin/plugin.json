@@ -1,0 +1,15 @@
+{
+  "name": "colete-online",
+  "version": "0.1.0",
+  "description": "Workflow, PR/issue audit, and Slack status skills for Colete Online work",
+  "author": {
+    "name": "mariosakka"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Colete Online",
+    "shortDescription": "Workflow, PR/issue audit, and Slack status skills for Colete Online work",
+    "developerName": "mariosakka",
+    "category": "Productivity"
+  }
+}

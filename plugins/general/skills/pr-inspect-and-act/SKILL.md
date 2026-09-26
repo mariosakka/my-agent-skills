@@ -46,8 +46,10 @@ tracked in a separate follow-up issue.
 Instead of running individual `gh` commands, use:
 
 ```bash
-~/.claude/skills/pr-inspect-and-act/scripts/pr-snapshot.sh OWNER/REPO NUMBER
+<skill-dir>/scripts/pr-snapshot.sh OWNER/REPO NUMBER
 ```
+
+(`<skill-dir>` is this skill's base directory, the folder containing this SKILL.md.)
 
 This fires all requests in parallel and prints, **in this order**: any linked
 issue(s) (parsed from `Closes/Fixes/Resolves/Related to #N` in the PR body,

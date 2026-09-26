@@ -19,7 +19,7 @@ version: 1
 
 # eod-weekly-log
 
-Manages two persistent work logs via shell scripts. Use `~/.desk/daily-log` for EOD, `~/.desk/weekly-log` for the Friday weekly message. Scripts live in `~/.my-agent-skills/eod-weekly-log/` (symlinked into `~/.desk/`). JSON data is stored in `~/.local/share/desk-logs/`.
+Manages two persistent work logs via shell scripts. Use `~/.desk/daily-log` for EOD, `~/.desk/weekly-log` for the Friday weekly message. Scripts live in the skill's base directory (the folder containing this SKILL.md) (symlinked into `~/.desk/`). JSON data is stored in `~/.local/share/desk-logs/`.
 
 ## Script interface
 

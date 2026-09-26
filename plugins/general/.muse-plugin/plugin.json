@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "name": "general",
+  "displayName": "General",
+  "version": "0.1.0",
+  "description": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports",
+  "compat": {
+    "source": "native",
+    "manifestDir": ".muse-plugin"
+  },
+  "capabilities": {
+    "skills": [
+      {
+        "id": "explain-syntax",
+        "path": "skills/explain-syntax/SKILL.md"
+      },
+      {
+        "id": "humanizer",
+        "path": "skills/humanizer/SKILL.md"
+      },
+      {
+        "id": "pr-inspect-and-act",
+        "path": "skills/pr-inspect-and-act/SKILL.md"
+      },
+      {
+        "id": "report-to-pdf",
+        "path": "skills/report-to-pdf/SKILL.md"
+      }
+    ]
+  }
+}

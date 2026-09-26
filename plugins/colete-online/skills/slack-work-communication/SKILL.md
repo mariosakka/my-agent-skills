@@ -16,7 +16,7 @@ description: >
 Channel IDs are stored in `config/channels.sh` — source it rather than hardcoding:
 
 ```bash
-source ~/.my-agent-skills/slack-work-communication/config/channels.sh
+source <skill-dir>/config/channels.sh   # <skill-dir> = the directory containing this SKILL.md
 # Now use: $SLACK_ZDEV_STATUS for #zdev-status, $SLACK_ZDEV_WEEKLY for #zdev-weekly
 ```
 

@@ -1,0 +1,15 @@
+{
+  "name": "general",
+  "version": "0.1.0",
+  "description": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports",
+  "author": {
+    "name": "mariosakka"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "General",
+    "shortDescription": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports",
+    "developerName": "mariosakka",
+    "category": "Productivity"
+  }
+}
