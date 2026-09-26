@@ -40,44 +40,35 @@ Then install the plugins from the marketplace, see the [Codex plugin docs](https
 
 ### Muse Code (experimental, unverified)
 
-Muse plugins are behind `MUSE_EXPERIMENTAL_PLUGINS=1`. The `.muse-plugin/marketplace.json` and `.muse-plugin/plugin.json` shapes here follow public Muse plugin repos, not official docs, so treat them as unverified. Install with `muse plugins install`, then `muse plugins approve <name>`; for the marketplace-add command, see the Muse Code docs. Muse also scans `.claude/skills`, so the `install.sh` fallback works too.
+Muse plugins are behind `MUSE_EXPERIMENTAL_PLUGINS=1`. The `.muse-plugin/marketplace.json` and `.muse-plugin/plugin.json` shapes here follow public Muse plugin repos, not official docs, so treat them as unverified. Install with `muse plugins install`, then `muse plugins approve <name>`; for the marketplace-add command, see the Muse Code docs.
 
-### Gemini CLI
+### Gemini CLI (manual install)
 
-Gemini has no marketplace, and its extensions only auto-discover a root `skills/` directory, so this repo is not packaged as a Gemini extension. Install skills individually from git:
-
-```bash
-gemini skills install https://github.com/mariosakka/my-agent-skills.git --path plugins/general/skills/humanizer
-```
-
-or use the `install.sh` fallback below to link everything at once.
-
-### install.sh fallback (symlinks)
-
-Requires [GitHub CLI](https://cli.github.com/) authenticated with your account.
+**Gemini has no plugin marketplace, so it can't install this repo automatically.** Its extensions only auto-discover a root `skills/` directory, and this repo keeps skills under `plugins/`. Install each skill yourself with `gemini skills install`, using `--path` to point at the skill's folder:
 
 ```bash
-gh repo clone mariosakka/my-agent-skills /tmp/mas && bash /tmp/mas/install.sh
+REPO=https://github.com/mariosakka/my-agent-skills.git
+
+# colete-online
+gemini skills install $REPO --path plugins/colete-online/skills/colete-flow --consent
+gemini skills install $REPO --path plugins/colete-online/skills/eod-weekly-log --consent
+gemini skills install $REPO --path plugins/colete-online/skills/issue-audit --consent
+gemini skills install $REPO --path plugins/colete-online/skills/pr-audit --consent
+gemini skills install $REPO --path plugins/colete-online/skills/slack-work-communication --consent
+
+# general
+gemini skills install $REPO --path plugins/general/skills/explain-syntax --consent
+gemini skills install $REPO --path plugins/general/skills/humanizer --consent
+gemini skills install $REPO --path plugins/general/skills/pr-inspect-and-act --consent
+gemini skills install $REPO --path plugins/general/skills/report-to-pdf --consent
 ```
 
-This will:
-1. Clone the repo to `~/.my-agent-skills/`
-2. Symlink each skill folder (found at `plugins/*/skills/*/SKILL.md`) into the skills directory for every configured platform:
-   - Claude Code → `~/.claude/skills/`
-   - Gemini CLI → `~/.gemini/skills/`
-   - GitHub Copilot CLI → `~/.config/gh-copilot/skills/`
-3. Remove stale symlinks (e.g. old flat paths) that point into `~/.my-agent-skills/` at targets that no longer exist. Real directories are never touched.
+Install only the skills you want. `--consent` skips the security confirmation prompt; drop it to review each one. Check the result with `gemini skills list`, and remove one with `gemini skills uninstall <name>`.
 
-**To update** (pull latest skills and re-link):
-```bash
-bash ~/.my-agent-skills/install.sh
-```
-
-**To skip a platform:**
-```bash
-SKIP_PLATFORMS="gemini copilot" bash ~/.my-agent-skills/install.sh
-```
-
+Notes:
+- There is no auto-update. To pick up changes, uninstall a skill and install it again.
+- The repo is private, so the install needs git credentials for `mariosakka/my-agent-skills` (for example `gh auth login`). This has not been tested with Gemini.
+- Command syntax is from the [Gemini CLI skills docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md).
 ---
 
 ## Plugins and skills
@@ -113,7 +104,7 @@ The old `homepage` skill is gone; the Desk VS Code extension (`mariosakka/vscode
 | Copilot CLI | `.github/plugin/marketplace.json` or `.claude-plugin/marketplace.json` | `plugin.json` | yes |
 | Codex | `.agents/plugins/marketplace.json` | `.codex-plugin/plugin.json` | yes |
 | Muse Code | `.muse-plugin/marketplace.json` (and `.agents/plugins/marketplace.json`) | `.muse-plugin/plugin.json` (`schemaVersion: 1`) | yes, experimental and unverified (`MUSE_EXPERIMENTAL_PLUGINS=1`) |
-| Gemini CLI | none | none (`gemini skills install <url> --path <dir>` per skill, or `install.sh`) | no |
+| Gemini CLI | none | none (manual `gemini skills install <url> --path <dir>` per skill) | no |
 
 ---
 
@@ -122,32 +113,15 @@ The old `homepage` skill is gone; the Desk VS Code extension (`mariosakka/vscode
 1. Pick a plugin (`plugins/colete-online` or `plugins/general`) and create `plugins/<group>/skills/<name>/`
 2. Add a `SKILL.md` inside it with frontmatter `name` (equal to the folder name) and a non-empty `description`
 3. Commit and push
-4. Update: Claude Code picks it up on marketplace update; for the symlink install re-run `bash ~/.my-agent-skills/install.sh`
+4. Update: marketplace tools pick it up on marketplace update. For Gemini, add a `gemini skills install` line to the Gemini section above.
 
 ```
 my-agent-skills/
-├── plugins/
-│   └── general/
-│       └── skills/
-│           └── my-skill/
-│               └── SKILL.md   ← required; marks this folder as a skill
-├── install.sh
-└── README.md
-```
-
----
-
-## Add a new platform
-
-Edit the `PLATFORMS` array near the top of `install.sh`:
-
-```bash
-PLATFORMS=(
-  "claude:${HOME}/.claude/skills"
-  "gemini:${HOME}/.gemini/skills"
-  "copilot:${HOME}/.config/gh-copilot/skills"
-  "myplatform:${HOME}/.myplatform/skills"   # ← add here
-)
+└── plugins/
+    └── general/
+        └── skills/
+            └── my-skill/
+                └── SKILL.md   ← required; marks this folder as a skill
 ```
 
 ---

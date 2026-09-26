@@ -18,7 +18,8 @@ Gemini CLI, with CI that catches drift between the formats.
   (`mariosakka/vscode-desk`), and it hardcoded a local path.
 - `eod-weekly-log` stays in `colete-online` for now. The owner will check whether
   Desk supersedes it.
-- `install.sh` stays as the fallback for Gemini, Copilot and symlink users.
+- `install.sh` was removed after the initial rollout (see "install.sh removal"). Gemini,
+  which has no marketplace, installs skills manually per the README.
 
 ## Layout
 
@@ -38,7 +39,6 @@ plugins/
     skills/<skill>/SKILL.md
 scripts/validate.sh                      drift + lint checks (used by CI)
 .github/workflows/validate.yml           CI
-install.sh                               updated for the new depth
 README.md                                install docs + compatibility table
 ```
 
@@ -77,8 +77,7 @@ unverified in the README until `muse plugins validate` has been run against it.
 
 - Gemini has no `skills` field or globs in `gemini-extension.json`; extensions only
   auto-discover a root `skills/` directory. The planned root `gemini-extension.json`
-  was dropped. Gemini users install with `gemini skills install <url> --path <dir>`
-  or `install.sh`.
+  was dropped. Gemini users install with `gemini skills install <url> --path <dir>`.
 - Muse's native marketplace file is `.muse-plugin/marketplace.json` (Claude-shaped),
   as seen in public Muse plugin repos; `.agents/plugins/marketplace.json` is kept too,
   as `obra/superpowers` does. Both are third-party-sourced and unverified.
@@ -100,11 +99,13 @@ the skill's base directory"). Do not change behavior or wording beyond the path.
 Out of scope: eod-weekly-log's dependency on `~/.desk/` symlinks. Flag it, don't
 change it.
 
-## install.sh
+## install.sh removal
 
-Discover skills at `plugins/*/skills/*/SKILL.md` instead of `*/SKILL.md`. Keep the
-platform array, `SKIP_PLATFORMS`, and the symlink behavior. Remove links for skills
-that no longer exist at the old flat paths only if they point into `INSTALL_DIR`.
+The symlink installer was updated for the new layout in the initial rollout, then
+removed. Every tool except Gemini installs from a marketplace, using the script for
+Claude alongside the marketplace would duplicate skills, and it does not work well
+on Windows (`ln -s` in Git Bash needs Developer Mode or admin rights). Gemini gets
+manual per-skill `gemini skills install` commands in the README instead.
 
 ## CI (`.github/workflows/validate.yml`)
 
