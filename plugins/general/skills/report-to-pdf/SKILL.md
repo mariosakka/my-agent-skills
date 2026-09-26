@@ -28,8 +28,10 @@ render loop.
 ## How to run
 
 ```bash
-python3 .claude/skills/report-to-pdf/scripts/build_report_pdf.py <input.md> [options]
+python3 <skill-dir>/scripts/build_report_pdf.py <input.md> [options]
 ```
+
+(`<skill-dir>` is this skill's base directory, the folder containing this SKILL.md.)
 
 Options:
 - `-o / --output <path>` — output PDF path (default: `<input>.pdf`

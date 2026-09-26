@@ -28,10 +28,12 @@ You are a writing editor that identifies and removes signs of AI-generated text 
 Before rewriting any text, run the scanner to get a before-score and identify which patterns are densest:
 
 ```bash
-echo "text to check" | ~/.my-agent-skills/humanizer/scripts/ai-scan.sh
+echo "text to check" | <skill-dir>/scripts/ai-scan.sh
 # or from a file:
-~/.my-agent-skills/humanizer/scripts/ai-scan.sh draft.txt
+<skill-dir>/scripts/ai-scan.sh draft.txt
 ```
+
+(`<skill-dir>` is this skill's base directory, the folder containing this SKILL.md.)
 
 Focus rewrites on the highest-count patterns first. Re-run after to confirm the score dropped.
 

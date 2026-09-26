@@ -23,7 +23,8 @@
 #   SKIP_PLATFORMS="gemini copilot" bash install.sh
 #
 # HOW TO ADD A NEW SKILL:
-#   1. Create a new folder in the repo root, e.g. my-skill/
+#   1. Pick a plugin group (plugins/colete-online or plugins/general)
+#      and create plugins/<group>/skills/<name>/
 #   2. Add a SKILL.md file inside it (this marks it as a skill)
 #   3. Commit and push to GitHub
 #   4. Re-run this script — it pulls the update and symlinks
@@ -89,9 +90,6 @@ skill_dirs=()
 while IFS= read -r -d '' skill_md; do
   skill_dir="$(dirname "${skill_md}")"
 
-  # Skip if SKILL.md is directly in repo root
-  [ "${skill_dir}" = "${INSTALL_DIR}" ] && continue
-
   skill_name="$(basename "${skill_dir}")"
 
   # Skip hidden directories (.git, etc.)
@@ -100,10 +98,10 @@ while IFS= read -r -d '' skill_md; do
   esac
 
   skill_dirs+=("${skill_dir}")
-done < <(find "${INSTALL_DIR}" -mindepth 2 -maxdepth 2 -name "SKILL.md" -print0 | sort -z)
+done < <(find "${INSTALL_DIR}/plugins" -mindepth 4 -maxdepth 4 -path "${INSTALL_DIR}/plugins/*/skills/*/SKILL.md" -name "SKILL.md" -print0 | sort -z)
 
 if [ "${#skill_dirs[@]}" -eq 0 ]; then
-  warn "No skill folders found in ${INSTALL_DIR}. Each skill needs a SKILL.md inside it."
+  warn "No skills found in ${INSTALL_DIR}/plugins. Each skill needs plugins/<group>/skills/<name>/SKILL.md."
   exit 0
 fi
 
@@ -122,6 +120,16 @@ for platform_entry in "${PLATFORMS[@]}"; do
 
   linked=()
   mkdir -p "${platform_dir}"
+
+  # Remove stale symlinks (old flat paths, deleted skills): only symlinks
+  # that point into INSTALL_DIR and whose target no longer exists.
+  for link in "${platform_dir}"/*; do
+    [ -L "${link}" ] || continue
+    [ -e "${link}" ] && continue
+    case "$(readlink "${link}")" in
+      "${INSTALL_DIR}"/*) rm -f "${link}"; log "[${platform_name}] Removed stale link: $(basename "${link}")" ;;
+    esac
+  done
 
   for skill_dir in "${skill_dirs[@]}"; do
     skill_name="$(basename "${skill_dir}")"
