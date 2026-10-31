@@ -143,6 +143,23 @@ bash scripts/run_tests.sh            # all tests; extra args go to pytest, e.g. 
 
 The shell-script tests need `bash` and `jq` (they skip when missing); the PDF tests need `fpdf2`, `Pillow` and `Pygments` (they skip when missing).
 
+### Test Strategy
+
+For every feature or behavior change, assess each layer below and record either
+the tests/evidence or a reasoned N/A. Add tests for new behavior, update tests
+when behavior changes, and remove or rewrite tests when their feature is removed.
+
+| Layer | Decision and evidence |
+| --- | --- |
+| Drift/contract | Covered by `tests/test_manifests.py` and `scripts/validate.sh`. |
+| Unit | Covered by `tests/` and `plugins/general/skills/repo-foundations/tests/`. |
+| Integration | Covered by `plugins/general/skills/repo-foundations/tests/test_check_release.py` and subprocess-based tool tests. |
+| UI/component/accessibility | N/A: this repository provides agent skills and has no interactive product UI. |
+| End-to-end/smoke | Covered by `.github/workflows/validate.yml` plugin-install smoke test. |
+| Performance/load | N/A: there is no long-running product runtime to profile. |
+| Security/privacy/data integrity | Covered by `plugins/general/skills/repo-foundations/tests/test_repo_check.py`. |
+| Domain-specific | N/A: reassess when a new feature introduces additional domain risks. |
+
 ---
 
 ## CI
@@ -151,14 +168,16 @@ The shell-script tests need `bash` and `jq` (they skip when missing); the PDF te
 
 Run the same repository checks natively on Windows with `powershell -NoProfile -File scripts/validate.ps1`; CI continues to use the Bash version.
 
-Install the local pre-push documentation check with `bash scripts/install_hooks.sh`.
+Install the local pre-push documentation and source/test checks with `bash scripts/install_hooks.sh`.
 Implementation, workflow, and command changes need a relevant Markdown update;
-test changes do too. Update test guidance when coverage, test scope, or test
-commands change. If a test-only or implementation-only change has no useful
-documentation update, add `Docs-Not-Required: <reason>` to the pull request
-description and set `DOC_SYNC_BYPASS_REASON="Docs-Not-Required: <reason>"` for
-the local push. CI runs the same check on pull requests; the hook is local
-feedback, not a substitute for CI.
+source additions/edits require related test additions/updates, and source
+removals require obsolete tests to be updated or removed. Test-only changes
+also require a Markdown update. For documented exceptions, use
+`Docs-Not-Required: <reason>` and/or `Tests-Not-Required: <reason>` in the PR
+description, or set `DOC_SYNC_BYPASS_REASON` and/or `TEST_SYNC_BYPASS_REASON`
+locally. CI runs both checks on pushes and pull requests; the hook is local
+feedback, not a substitute for CI. Test deletions without a related source
+change are blocked so feature coverage is not removed by itself.
 
 `.github/workflows/release-please.yml` manages separate releases for the
 `general` and `colete-online` plugins. Use Conventional Commits for plugin

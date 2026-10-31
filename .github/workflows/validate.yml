@@ -19,11 +19,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check implementation and documentation changes
+      - name: Check documentation and source/test changes
         if: github.event_name == 'pull_request'
         env:
           DOC_SYNC_BYPASS_REASON: ${{ github.event.pull_request.body }}
+          TEST_SYNC_BYPASS_REASON: ${{ github.event.pull_request.body }}
         run: python scripts/check_docs_sync.py "${{ github.event.pull_request.base.sha }}" "$GITHUB_SHA"
+
+      - name: Check documentation and source/test changes on push
+        if: github.event_name == 'push'
+        env:
+          BASE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            echo "No previous commit to compare; skipping change-sync check on initial push."
+            exit 0
+          fi
+          export DOC_SYNC_BYPASS_REASON="$(git log --format=%B "$BASE_SHA..$GITHUB_SHA")"
+          export TEST_SYNC_BYPASS_REASON="$DOC_SYNC_BYPASS_REASON"
+          python scripts/check_docs_sync.py "$BASE_SHA" "$GITHUB_SHA"
 
       - name: Skill lint and drift check
         run: bash scripts/validate.sh

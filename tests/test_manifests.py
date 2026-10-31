@@ -99,6 +99,29 @@ def test_docs_sync_guard_requires_a_reasoned_bypass():
     assert check_paths(["scripts/run_tests.sh"], "Docs-Not-Required:")[0] == 1
 
 
+def test_source_test_guard_tracks_additions_edits_and_removals():
+    from scripts.check_docs_sync import check_test_sync
+
+    assert check_test_sync(["src/new_feature.py"])[0] == 1
+    assert check_test_sync(["src/feature.py", "tests/test_feature.py"])[0] == 0
+    assert check_test_sync(["lib/screen.dart"])[0] == 1
+    assert check_test_sync(["lib/screen.dart", "test/screen_test.dart"])[0] == 0
+    assert check_test_sync(["plugins/general/.claude-plugin/plugin.json"])[0] == 0
+    assert check_test_sync(["src/old_feature.py"], ["src/old_feature.py"])[0] == 1
+    assert check_test_sync(
+        ["src/old_feature.py", "tests/test_old_feature.py"],
+        ["src/old_feature.py", "tests/test_old_feature.py"],
+    )[0] == 0
+    assert check_test_sync(["tests/test_feature.py"], ["tests/test_feature.py"])[0] == 1
+
+
+def test_source_test_guard_allows_only_a_reasoned_bypass():
+    from scripts.check_docs_sync import check_test_sync
+
+    assert check_test_sync(["src/generated.py"], bypass_value="Tests-Not-Required: generated output")[0] == 0
+    assert check_test_sync(["src/generated.py"], bypass_value="Tests-Not-Required:")[0] == 1
+
+
 def test_validate_script_passes():
     if not (BASH and shutil.which("jq")):
         pytest.skip("bash and jq are needed to run scripts/validate.sh")

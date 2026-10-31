@@ -16,6 +16,12 @@ tests only when classification reliably excludes executable changes; keep docs
 and applicable quality checks. Provide an optional, documented hook installer
 for fast feedback. CI is authoritative because local hooks can be bypassed.
 
+Enforce feature/test lifecycle alignment in local hooks and CI: source additions
+or edits require related test additions or updates; source removals require
+obsolete tests to be updated or removed; standalone test deletion requires a
+documented reason. Provide a narrow reasoned bypass for changes where tests are
+not applicable.
+
 Prefer one platform-neutral task runner for developer checks. When a required
 check depends on a shell or platform unavailable to supported contributors,
 provide a native equivalent only where needed, keep both implementations

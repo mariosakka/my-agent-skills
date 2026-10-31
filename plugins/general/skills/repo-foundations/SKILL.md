@@ -31,6 +31,9 @@ infrastructure or change deployment policy merely because it appears below.
    that cover the real needs. Include runnable checks for new behavior, update
    the actual callers and canonical docs, and run the relevant checks. Report
    failures, skipped checks, assumptions, and unverified platform support.
+   Every feature change must add or update related tests; feature removals must
+   remove or rewrite tests for behavior that no longer exists. Assess each test
+   layer and record coverage or a reasoned N/A in the plan/PR.
 5. Run `python <skill-dir>/scripts/foundations_audit.py <repo>` to check
    observable repository foundations and identify gaps. Treat heuristic results
    as prompts for review, not proof of quality; architecture and risk decisions

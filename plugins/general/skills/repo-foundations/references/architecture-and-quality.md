@@ -35,23 +35,38 @@ Keep sensitive details in an appropriately private location.
 
 ## Risk-Based Tests
 
+Every feature or behavior-change plan must assess each layer below, plus any
+domain-specific layers. Record the planned test or a reasoned N/A for every
+layer; do not silently omit a category. Implement and run tests for applicable
+risks before merge, or record the blocked check and owner. Adding behavior adds
+tests; changing behavior updates the relevant tests; removing behavior removes
+or rewrites tests that describe the removed behavior. Keep tests aligned with
+the current product, not as historical leftovers.
+
 Pick the lowest-cost layers that demonstrate the behavior and its risks:
 
+- Drift/contract: schemas, generated artifacts, manifests, persistence formats,
+  API contracts, and compatibility between duplicated sources of truth.
 - Unit: rules, parsing, validation, boundaries, and failure cases.
-- Component/UI where applicable: interaction, accessibility, localization,
-  responsive layouts, empty/loading/error states, and platform behavior.
 - Integration: important workflows across real app boundaries, using fakes for
   external services and injectable time by default.
-- Contract: schemas and third-party compatibility, separate from offline tests.
+- Component/UI where applicable: interaction, accessibility, localization,
+  responsive layouts, empty/loading/error states, and platform behavior.
+- End-to-end/smoke: critical user journeys and installation/startup paths.
 - Security/data integrity: authentication, authorization, migrations,
   concurrent edits, backup/restore, and failure recovery as relevant.
 - Performance: representative workloads, reproducible baselines, measurable
   budgets, and physical-device evidence when hardware affects the result.
+- Other domain-specific checks: for example accessibility, concurrency,
+  localization, offline behavior, or migration verification where relevant.
 
 Test user-visible regressions at the lowest appropriate layer, adding broader
 coverage when behavior crosses boundaries. Exercise data-loss paths: Undo,
 retries, sync and restores must not overwrite later changes. Keep tests
 isolated, deterministic, fast, and individually runnable; remove redundant
-tests only when equivalent coverage is demonstrable. Coverage measures a
-selection, not correctness; report its denominator and exclusions instead of
-gaming a percentage. Record intentionally untested risks and ownership.
+tests only when equivalent coverage is demonstrable. CI and local change checks
+must require test changes alongside source additions, edits, and removals;
+intentional exceptions need a documented `Tests-Not-Required: <reason>`.
+Coverage measures a selection, not correctness; report its denominator and
+exclusions instead of gaming a percentage. Record intentionally untested risks
+and ownership.

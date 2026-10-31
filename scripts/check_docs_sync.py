@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Require docs alongside implementation or test changes."""
+"""Require source/test co-changes and docs alongside implementation or test changes."""
 
 import argparse
 import os
@@ -10,12 +10,18 @@ from pathlib import PurePosixPath
 
 DOC_SUFFIXES = {".md", ".rst", ".adoc"}
 IMPLEMENTATION_SUFFIXES = {
-    ".c", ".cc", ".cpp", ".cs", ".go", ".gradle", ".h", ".hpp", ".html",
-    ".ini", ".java", ".js", ".json", ".kt", ".py", ".rs", ".sh", ".sql",
-    ".ps1", ".swift", ".toml", ".ts", ".tsx", ".xml", ".yaml", ".yml",
+    ".c", ".cc", ".cpp", ".cs", ".css", ".dart", ".ex", ".exs", ".go",
+    ".gradle", ".h", ".hpp", ".html", ".ini", ".java", ".js", ".jsx",
+    ".json", ".kt", ".lua", ".m", ".mm", ".php", ".pl", ".ps1", ".py",
+    ".r", ".rb", ".rs", ".sass", ".scala", ".scss", ".sh", ".sql", ".svelte",
+    ".swift", ".toml", ".ts", ".tsx", ".vue", ".xml", ".yaml", ".yml",
+}
+SOURCE_SUFFIXES = IMPLEMENTATION_SUFFIXES - {
+    ".gradle", ".ini", ".json", ".toml", ".xml", ".yaml", ".yml",
 }
 TEST_DIRS = {"test", "tests"}
 NO_DOCS_MARKER = "Docs-Not-Required:"
+NO_TESTS_MARKER = "Tests-Not-Required:"
 
 
 def is_test_path(path):
@@ -35,6 +41,15 @@ def is_documentation_required_path(path):
     return is_test_path(path) or parsed.suffix.lower() in IMPLEMENTATION_SUFFIXES
 
 
+def is_source_path(path):
+    parsed = PurePosixPath(path)
+    if is_test_path(path) or parsed.suffix.lower() in DOC_SUFFIXES:
+        return False
+    if path.startswith(("scripts/", ".githooks/", ".github/workflows/")):
+        return True
+    return parsed.suffix.lower() in SOURCE_SUFFIXES
+
+
 def is_documentation_path(path):
     return PurePosixPath(path).suffix.lower() in DOC_SUFFIXES
 
@@ -42,6 +57,14 @@ def is_documentation_path(path):
 def bypass_reason(value):
     for line in value.splitlines():
         key, separator, reason = line.partition(NO_DOCS_MARKER)
+        if separator and not key.strip() and reason.strip():
+            return reason.strip()
+    return None
+
+
+def marker_reason(value, marker):
+    for line in value.splitlines():
+        key, separator, reason = line.partition(marker)
         if separator and not key.strip() and reason.strip():
             return reason.strip()
     return None
@@ -66,6 +89,35 @@ def check_paths(paths, bypass_value=""):
     )
 
 
+def check_test_sync(paths, deleted_paths=(), bypass_value=""):
+    sources = [path for path in paths if is_source_path(path)]
+    tests = [path for path in paths if is_test_path(path)]
+    deleted = set(deleted_paths)
+    changed_tests = [path for path in tests if path not in deleted]
+    deleted_tests = [path for path in tests if path in deleted]
+    changed_sources = [path for path in sources if path not in deleted]
+    deleted_sources = [path for path in sources if path in deleted]
+
+    reason = marker_reason(bypass_value, NO_TESTS_MARKER)
+    if reason:
+        return 0, f"Source/test check bypassed: {reason}"
+    if changed_sources and not changed_tests:
+        problem = "Source additions or edits require related test additions or updates."
+    elif deleted_sources and not tests:
+        problem = "Removing source behavior requires removing or updating its tests."
+    elif deleted_tests and not sources and not changed_tests:
+        problem = "Test deletions require a related source change; do not remove coverage alone."
+    else:
+        return 0, "Source/test check passed."
+
+    changed = "\n  ".join(sources + tests)
+    return 1, (
+        f"{problem} Add `Tests-Not-Required: <reason>` to the PR description "
+        "or set TEST_SYNC_BYPASS_REASON before pushing for a justified exception.\n"
+        f"Source/test paths:\n  {changed}"
+    )
+
+
 def git(*args, check=True):
     result = subprocess.run(["git", *args], check=False, capture_output=True)
     if check and result.returncode:
@@ -75,6 +127,11 @@ def git(*args, check=True):
 
 def changed_paths(base, head):
     result = git("diff", "--name-only", "-z", base, head)
+    return [os.fsdecode(item) for item in result.stdout.split(b"\0") if item]
+
+
+def deleted_paths(base, head):
+    result = git("diff", "--diff-filter=D", "--name-only", "-z", base, head)
     return [os.fsdecode(item) for item in result.stdout.split(b"\0") if item]
 
 
@@ -129,12 +186,15 @@ def main():
             return 0
         failures = []
         for base, head in ranges:
-            status, message = check_paths(
-                changed_paths(base, head), os.environ.get("DOC_SYNC_BYPASS_REASON", "")
-            )
-            print(message)
-            if status:
-                failures.append(status)
+            paths = changed_paths(base, head)
+            deleted = deleted_paths(base, head)
+            for status, message in (
+                check_paths(paths, os.environ.get("DOC_SYNC_BYPASS_REASON", "")),
+                check_test_sync(paths, deleted, os.environ.get("TEST_SYNC_BYPASS_REASON", "")),
+            ):
+                print(message)
+                if status:
+                    failures.append(status)
         return 1 if failures else 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Docs/change check failed: {error}", file=sys.stderr)
