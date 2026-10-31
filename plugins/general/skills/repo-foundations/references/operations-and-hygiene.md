@@ -7,7 +7,8 @@ agents. Apply what fits the project.
 
 - **Executable bits.** Every tracked script is mode 100755 in the index; check
   it in CI or an audit script. A script committed as 100644 exits 126 in CI while
-  a Windows hook runs it fine. Fix with `git update-index --chmod=+x`.
+  a Windows hook runs it fine. Fix with `git update-index --chmod=+x`;
+  `scripts/foundations_audit.py` reports tracked shebang scripts that lack it.
 - **Verify CI after a push.** Do not report "pushed" or "green" until the
   workflow result for that commit has been read (`gh run list`, `gh run watch`).
   Provide a one-command check in the developer tooling.

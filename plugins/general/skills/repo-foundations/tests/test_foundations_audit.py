@@ -1,5 +1,6 @@
 from pathlib import Path
 import importlib.util
+import subprocess
 import tempfile
 import unittest
 
@@ -60,6 +61,22 @@ class FoundationsAuditTests(unittest.TestCase):
         self.assertEqual(checks["CI workflow"], ("WARN", True))
         self.assertEqual(checks["test files"], ("WARN", True))
         self.assertEqual(checks["test strategy: integration"], ("WARN", True))
+
+    def test_flags_tracked_shebang_scripts_without_the_executable_bit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            git = ["git", "-C", directory]
+            subprocess.run(git + ["init", "-q"], check=True)
+            (repo / "run.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+            (repo / "ok.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+            (repo / "notes.txt").write_text("plain", encoding="utf-8")
+            subprocess.run(git + ["add", "."], check=True)
+            subprocess.run(git + ["update-index", "--chmod=+x", "ok.sh"], check=True)
+
+            self.assertEqual(AUDIT.non_executable_scripts(repo), ["run.sh"])
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["tracked scripts are executable"], "INFO")
 
     def test_covered_layer_needs_existing_test_evidence(self):
         with tempfile.TemporaryDirectory() as directory:

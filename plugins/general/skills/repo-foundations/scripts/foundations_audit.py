@@ -5,6 +5,7 @@ import argparse
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 
@@ -73,6 +74,27 @@ def test_strategy_status(repo, relative):
     return statuses
 
 
+def non_executable_scripts(repo):
+    """Tracked files that start with a shebang but are not mode 100755."""
+    try:
+        out = subprocess.run(["git", "-C", str(repo), "ls-files", "-s"], capture_output=True,
+                             text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    bad = []
+    for line in out.splitlines():
+        meta, _, name = line.partition("	")
+        if meta.split()[0] != "100644":
+            continue
+        try:
+            with open(Path(repo) / name, "rb") as handle:
+                if handle.read(2) == b"#!":
+                    bad.append(name)
+        except OSError:
+            continue
+    return bad
+
+
 def audit_repo(repo):
     repo = Path(repo).resolve()
     files = []
@@ -120,6 +142,7 @@ def audit_repo(repo):
         ("docs/test synchronization guard", has_docs_guard, False),
         ("release automation", any("release" in name.lower() for name in relative
                                     if name.startswith((".github/workflows/", ".gitlab/"))), False),
+        ("tracked scripts are executable", not non_executable_scripts(repo), False),
         ("known-issues tracking", any("known-issues" in name.lower() or "known_issues" in name.lower()
                                       for name in relative), False),
     ]
