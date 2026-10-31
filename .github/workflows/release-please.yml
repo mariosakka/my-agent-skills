@@ -19,5 +19,3 @@ jobs:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          command: manifest
-          default-branch: master

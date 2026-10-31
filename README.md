@@ -165,6 +165,8 @@ feedback, not a substitute for CI.
 changes (`feat(scope):` for new behavior, `fix(scope):` for corrections,
 `perf(scope):` for meaningful performance changes); scopes should identify the
 plugin or skill. Release Please opens a version/changelog PR, and merging that
-PR creates the plugin's versioned GitHub Release. The first generated changelog
-starts after the configured bootstrap commit. Repository administrators must
-allow GitHub Actions to create pull requests for the workflow's `GITHUB_TOKEN`.
+PR creates the plugin's versioned GitHub Release. Current package versions in
+`.release-please-manifest.json` are the baseline; after the history consolidation,
+new Conventional Commits determine future version bumps. Repository
+administrators must allow GitHub Actions to create pull requests for the
+workflow's `GITHUB_TOKEN`.

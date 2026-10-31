@@ -63,9 +63,10 @@ def test_release_please_versions_cover_and_match_every_plugin_manifest():
         assert release["release-type"] == "simple"
         assert release["component"] == plugin.name
         assert (plugin / release["version-file"]).read_text(encoding="utf-8").strip() == version
-        expected_paths = {f"{package}/{manifest}" for manifest in MANIFESTS}
+        expected_paths = set(MANIFESTS)
         assert {item["path"] for item in release["extra-files"]} == expected_paths
         for manifest in MANIFESTS:
+            assert (plugin / manifest).is_file()
             assert load(plugin / manifest)["version"] == version
 
 
