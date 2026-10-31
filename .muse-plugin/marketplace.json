@@ -1,0 +1,17 @@
+{
+  "name": "mario-agent-skills",
+  "description": "Personal agent skills marketplace",
+  "owner": { "name": "mariosakka" },
+  "plugins": [
+    {
+      "name": "colete-online",
+      "source": "./plugins/colete-online",
+      "description": "Workflow, PR/issue audit, and Slack status skills for Colete Online work"
+    },
+    {
+      "name": "general",
+      "source": "./plugins/general",
+      "description": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports, teaching explanations from any source material"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -eu
+repo_root="$(git rev-parse --show-toplevel)"
+exec python "$repo_root/scripts/check_docs_sync.py" --pre-push --remote "$1"

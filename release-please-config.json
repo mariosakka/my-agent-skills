@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "d89082f35c717aa457f6448a984d459b6d950973",
+  "packages": {
+    "plugins/colete-online": {
+      "release-type": "simple",
+      "package-name": "colete-online",
+      "component": "colete-online",
+      "version-file": "VERSION",
+      "include-component-in-tag": true,
+      "extra-files": [
+        { "type": "json", "path": "plugins/colete-online/.claude-plugin/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "plugins/colete-online/.codex-plugin/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "plugins/colete-online/.muse-plugin/plugin.json", "jsonpath": "$.version" }
+      ]
+    },
+    "plugins/general": {
+      "release-type": "simple",
+      "package-name": "general",
+      "component": "general",
+      "version-file": "VERSION",
+      "include-component-in-tag": true,
+      "extra-files": [
+        { "type": "json", "path": "plugins/general/.claude-plugin/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "plugins/general/.codex-plugin/plugin.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "plugins/general/.muse-plugin/plugin.json", "jsonpath": "$.version" }
+      ]
+    }
+  }
+}

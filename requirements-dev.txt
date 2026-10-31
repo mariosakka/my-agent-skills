@@ -1,0 +1,5 @@
+pytest>=8
+fpdf2
+Pillow
+Pygments
+pypdf
