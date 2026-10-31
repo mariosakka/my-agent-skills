@@ -25,6 +25,9 @@ infrastructure or change deployment policy merely because it appears below.
 3. For CI, hooks, publication, or release work, read
    [CI and release](references/ci-and-release.md). A local hook is advisory;
    the corresponding required CI gate must not depend on its installation.
+   Read [operations and hygiene](references/operations-and-hygiene.md) for
+   executable bits, post-push CI verification, skipped-test handling, line
+   endings, registers, device runs, delegated agents and signing.
    Prefer platform-neutral developer checks; when supported contributors need
    different shells, provide tested native equivalents and document their parity.
 4. Implement the requested foundations with the fewest files and dependencies
