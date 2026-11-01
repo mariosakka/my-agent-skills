@@ -195,5 +195,7 @@ new Conventional Commits determine future version bumps. Repository
 administrators must allow GitHub Actions to create pull requests for the
 workflow's `GITHUB_TOKEN`. The Release Please workflow dispatches full validation
 for its generated PR because `GITHUB_TOKEN`-created PR events may await approval;
-the `Auto-merge Release Please` workflow enables squash auto-merge only after
-validation succeeds for the exact current PR head SHA.
+the `Auto-merge Release Please` workflow acts only on a successful validation run
+for the generated branch, verifies the bot author and exact current PR head SHA,
+then squash-merges that commit. A stale validation result cannot merge a newer
+PR head.

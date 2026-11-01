@@ -13,7 +13,6 @@ jobs:
   auto-merge:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'workflow_dispatch' &&
       github.event.workflow_run.head_branch == 'release-please--branches--master'
     runs-on: ubuntu-latest
     steps:
