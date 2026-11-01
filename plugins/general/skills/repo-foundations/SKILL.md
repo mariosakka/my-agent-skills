@@ -57,7 +57,15 @@ local databases, machine-specific configuration, or sensitive identifiers
 without explicit authorization. Use sanitized fixtures and appropriate ignore
 rules. Before committing or publishing, review the actual staged diff and
 artifacts, including contents and history when relevant; use an established
-secret scanner if available. Filename checks alone cannot prove safety. If
+secret scanner. Require Gitleaks or an equivalent in CI and in the installed
+pre-push hook; CI must remain authoritative if hooks are unavailable or
+bypassed. Make missing local scanner installation fail clearly rather than
+silently skipping. Scan proposed commits and run a full-history scan at setup
+and on a schedule. Keep the scanner version/config consistent, narrowly
+document reviewed false-positive exceptions with an owner and expiry, and
+never suppress broad paths to obtain a green build. If a credential is found,
+stop publication and revoke/rotate it; deleting the text alone does not make an
+exposed credential safe. Filename checks alone cannot prove safety. If
 ownership or sensitivity is unclear, leave the item out and ask.
 
 For a read-only inventory, run `python <skill-dir>/scripts/repo_check.py <repo>`.

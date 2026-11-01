@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 set -eu
 repo_root="$(git rev-parse --show-toplevel)"
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-push: Gitleaks is required; install it from https://github.com/gitleaks/gitleaks#installing" >&2
+  exit 1
+fi
+gitleaks git --redact --no-banner --log-opts="--all --full-history"
 exec python "$repo_root/scripts/check_docs_sync.py" --pre-push --remote "$1"

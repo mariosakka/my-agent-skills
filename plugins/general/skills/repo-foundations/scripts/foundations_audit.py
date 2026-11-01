@@ -30,6 +30,7 @@ TEST_LAYERS = {
 TEST_PLAN_HEADING = re.compile(r"^#{1,6}\s+.*\b(test|testing)\b.*\b(strategy|layers|coverage|matrix|plan)\b", re.IGNORECASE)
 TEST_DECISION = re.compile(r"\bcovered\b|\bN/A\b|not applicable", re.IGNORECASE)
 GUARD_SCRIPT = re.compile(r"(?:^|/)(?:scripts|tools)/check_[\w-]*(?:sync|updated|lifecycle)[\w-]*\.(?:py|sh)$", re.IGNORECASE)
+SECRET_SCANNER = re.compile(r"gitleaks|trufflehog|detect-secrets|git-secrets|secretlint", re.IGNORECASE)
 IGNORED_DIRS = {".git", ".venv", "venv", "node_modules", "build", "dist", "__pycache__"}
 
 
@@ -117,7 +118,13 @@ def audit_repo(repo):
         readme_text = readme.read_text(encoding="utf-8", errors="ignore").lower()
         dev_docs |= "test" in readme_text and any(term in readme_text for term in ("development", "ci", "contribut"))
     ci_mentions_tests = any(TEST_COMMAND.search(path.read_text(encoding="utf-8", errors="ignore")) for path in ci_files)
+    ci_secret_scan = any(SECRET_SCANNER.search(path.read_text(encoding="utf-8", errors="ignore"))
+                         for path in ci_files)
     hooks = any(name.startswith((".githooks/", ".husky/")) for name in relative)
+    pre_push_hooks = [path for name, path in relative.items()
+                      if name in {".githooks/pre-push", ".husky/pre-push"}]
+    hook_secret_scan = any(SECRET_SCANNER.search(path.read_text(encoding="utf-8", errors="ignore"))
+                           for path in pre_push_hooks)
     all_ci_and_hooks = [path for path in ci_files]
     all_ci_and_hooks.extend(path for name, path in relative.items()
                             if name.startswith((".githooks/", ".husky/")))
@@ -137,6 +144,8 @@ def audit_repo(repo):
         ("CI workflow", bool(ci_files), True),
         ("test files", bool(tests), True),
         ("CI runs tests (heuristic)", bool(ci_files) and ci_mentions_tests, True),
+        ("secret scanning in CI", ci_secret_scan, True),
+        ("secret scanning in pre-push hook", hook_secret_scan, True),
         ("developer/test guidance", dev_docs, True),
         ("source/test change guard", bool(sync_wired), True),
         ("local hook implementation present", hooks, False),

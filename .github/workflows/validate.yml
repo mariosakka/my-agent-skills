@@ -50,6 +50,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Repository foundations audit
+        run: python plugins/general/skills/repo-foundations/scripts/foundations_audit.py .
+
       - name: Skill unit tests
         run: |
           python -m pip install -r requirements-dev.txt

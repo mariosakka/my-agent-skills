@@ -3,6 +3,7 @@ import ast
 import py_compile
 import re
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -158,3 +159,47 @@ def test_repo_foundations_requires_measured_network_and_cache_efficiency():
     assert "request and performance budgets" in quality
     assert "maintained request/performance ledger" in quality
     assert "measured savings" in quality
+
+
+def test_repo_foundations_requires_secret_scanning_in_ci_and_pre_push():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    body = " ".join((skill / "SKILL.md").read_text(encoding="utf-8").lower().split())
+    pipelines = " ".join(
+        (skill / "references" / "ci-and-release.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "require gitleaks or an equivalent in ci and in the installed pre-push hook" in body
+    assert "scheduled full-history scan" in pipelines
+    assert "must fail with installation instructions" in pipelines
+
+
+def test_current_repo_runs_pinned_gitleaks_in_ci_and_pre_push():
+    workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "secret-scan.yml")
+    hook = (Path(__file__).resolve().parents[1] / ".githooks" / "pre-push")
+    workflow_text = workflow.read_text(encoding="utf-8").lower()
+    hook_text = hook.read_text(encoding="utf-8").lower()
+    assert "pull_request:" in workflow_text
+    assert "schedule:" in workflow_text
+    assert re.search(r"gitleaks/gitleaks-action@[0-9a-f]{40}", workflow_text)
+    assert "gitleaks_version: 8.30.1" in workflow_text
+    assert "gitleaks git" in hook_text
+    assert "command -v gitleaks" in hook_text
+
+
+def test_repo_foundations_requires_api_contract_generation_and_publication_rules():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    pipelines = " ".join(
+        (skill / "references" / "ci-and-release.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "one source of truth for the public api contract" in pipelines
+    assert "fail on unexplained drift" in pipelines
+    assert "breaking compatibility" in pipelines
+    assert "generated clients" in pipelines
+    assert "publish versioned, immutable schemas" in pipelines
+    assert "publishing api documentation/contracts is distinct from" in pipelines
+    assert "record the source commit, artifact version/checksum" in pipelines

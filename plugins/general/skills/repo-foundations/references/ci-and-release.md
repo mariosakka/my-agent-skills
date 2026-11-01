@@ -9,6 +9,14 @@ permissions, isolate untrusted pull requests from secrets, and pin third-party
 actions to reviewed immutable revisions where supported. Use concurrency limits,
 timeouts, and caching without sharing mutable test state between parallel jobs.
 
+Run Gitleaks or an equivalent secret scanner as a required CI check for pull
+requests and pushes, plus a scheduled full-history scan. Wire the same pinned
+scanner version and repository config into the installed pre-push hook, scanning
+the outgoing commits before they leave the machine. CI remains authoritative;
+the hook must fail with installation instructions when the scanner is missing,
+not silently pass. Document narrow false-positive exceptions with owner, reason,
+and expiry, and test that both CI and hook wiring remain present.
+
 Keep fast deterministic checks on pull requests; separate expensive device,
 performance, live-contract, and scheduled checks. Confirm required jobs execute
 non-empty test selections. For documentation-only changes, skip functional
@@ -27,6 +35,33 @@ check depends on a shell or platform unavailable to supported contributors,
 provide a native equivalent only where needed, keep both implementations
 behaviorally aligned, and add parity tests or shared fixtures to detect drift.
 Document the canonical CI command and each supported local invocation.
+
+## API Contracts And Publication
+
+- Choose and document one source of truth for the public API contract (for
+  example OpenAPI, protobuf, or GraphQL schema). Pin the generator/toolchain and
+  make generation deterministic. State whether generated clients/schemas are
+  committed or built as release artifacts; do not hand-edit generated output.
+- In CI, validate and lint the contract, regenerate artifacts and fail on
+  unexplained drift, run endpoint contract tests, and check changes against the
+  last released contract for breaking compatibility. Build representative
+  generated clients or consumer fixtures so a valid schema that produces
+  unusable clients cannot pass unnoticed.
+- Publish versioned, immutable schemas and generated clients from a protected
+  release ref only after required tests pass. Keep artifact versioning aligned
+  with the API compatibility policy; document deprecation, migration, and
+  support windows. Publishing API documentation/contracts is distinct from
+  deploying the API service.
+- For API service deployment, promote the same tested image/artifact through
+  staging and production, run health and contract smoke checks against the
+  deployed version, protect production credentials and approvals, and define a
+  rollback path that accounts for database migrations. Never deploy from an
+  untrusted pull-request job or expose internal routes in public API docs.
+- Verify publication and deployment through the registry/endpoint and record
+  the source commit, artifact version/checksum, and workflow run. A configured
+  workflow or a successful build alone is not proof that the contract or API
+  was actually published. Repositories without an API should record this layer
+  as not applicable rather than adding unused release infrastructure.
 
 ## Dependency-Update Automation
 

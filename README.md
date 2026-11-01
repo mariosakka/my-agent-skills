@@ -169,6 +169,11 @@ when behavior changes, and remove or rewrite tests when their feature is removed
 Run the same repository checks natively on Windows with `powershell -NoProfile -File scripts/validate.ps1`; CI continues to use the Bash version.
 
 Install the local pre-push documentation and source/test checks with `bash scripts/install_hooks.sh`.
+The hook also runs Gitleaks against committed Git history. Install Gitleaks
+from its [official instructions](https://github.com/gitleaks/gitleaks#installing)
+before pushing; missing Gitleaks blocks the push. The `secret-scan` workflow
+runs the pinned scanner on pull requests, pushes, and weekly against full
+history.
 Implementation, workflow, and command changes need a relevant Markdown update;
 source additions/edits require related test additions/updates, and source
 removals require obsolete tests to be updated or removed. Test-only changes

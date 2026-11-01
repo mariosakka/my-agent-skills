@@ -40,7 +40,12 @@ class FoundationsAuditTests(unittest.TestCase):
             (repo / "tests" / "test_example.py").write_text("def test_ok(): pass", encoding="utf-8")
             (repo / ".github" / "workflows").mkdir(parents=True)
             (repo / ".github" / "workflows" / "ci.yml").write_text(
-                "run: pytest\npython scripts/check_docs_sync.py base head", encoding="utf-8"
+                "run: pytest\nuses: gitleaks/gitleaks-action@pinned-sha\n"
+                "python scripts/check_docs_sync.py base head", encoding="utf-8"
+            )
+            (repo / ".githooks").mkdir()
+            (repo / ".githooks" / "pre-push").write_text(
+                "gitleaks git --redact\n", encoding="utf-8"
             )
             (repo / "scripts").mkdir()
             (repo / "scripts" / "check_docs_sync.py").write_text("def check_test_sync(): pass", encoding="utf-8")
@@ -50,9 +55,11 @@ class FoundationsAuditTests(unittest.TestCase):
 
         self.assertEqual(checks["README"], "PASS")
         self.assertEqual(checks["CI runs tests (heuristic)"], "PASS")
+        self.assertEqual(checks["secret scanning in CI"], "PASS")
+        self.assertEqual(checks["secret scanning in pre-push hook"], "PASS")
         self.assertEqual(checks["source/test change guard"], "PASS")
         self.assertEqual(checks["test strategy: drift/contract"], "PASS")
-        self.assertEqual(checks["local hook implementation present"], "INFO")
+        self.assertEqual(checks["local hook implementation present"], "PASS")
 
     def test_warns_when_required_foundation_signals_are_missing(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -60,7 +67,28 @@ class FoundationsAuditTests(unittest.TestCase):
 
         self.assertEqual(checks["CI workflow"], ("WARN", True))
         self.assertEqual(checks["test files"], ("WARN", True))
+        self.assertEqual(checks["secret scanning in CI"], ("WARN", True))
+        self.assertEqual(checks["secret scanning in pre-push hook"], ("WARN", True))
         self.assertEqual(checks["test strategy: integration"], ("WARN", True))
+
+    def test_secret_scan_requires_both_ci_and_pre_push_wiring(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            workflow = repo / ".github" / "workflows" / "secret-scan.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("uses: gitleaks/gitleaks-action@pinned-sha", encoding="utf-8")
+            hook = repo / ".githooks" / "pre-push"
+            hook.parent.mkdir()
+            hook.write_text("gitleaks git --redact", encoding="utf-8")
+
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+            self.assertEqual(checks["secret scanning in CI"], "PASS")
+            self.assertEqual(checks["secret scanning in pre-push hook"], "PASS")
+
+            hook.write_text("python scripts/check_docs_sync.py", encoding="utf-8")
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+            self.assertEqual(checks["secret scanning in CI"], "PASS")
+            self.assertEqual(checks["secret scanning in pre-push hook"], "WARN")
 
     def test_flags_tracked_shebang_scripts_without_the_executable_bit(self):
         with tempfile.TemporaryDirectory() as directory:

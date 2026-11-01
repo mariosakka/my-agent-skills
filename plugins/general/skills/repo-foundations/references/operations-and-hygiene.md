@@ -5,6 +5,12 @@ agents. Apply what fits the project.
 
 ## Git And CI
 
+- **Secret scanning.** Run Gitleaks (or an equivalent) in PR/push CI, a
+  scheduled full-history check, and the installed pre-push hook. Pin the scanner
+  version/config; fail clearly when a local hook dependency is missing. Keep
+  allowlists narrow, reviewed, owned, and time-bounded. A finding blocks
+  publication until the credential is revoked/rotated; removing it from the
+  latest file does not remove exposure from Git history.
 - **Executable bits.** Every tracked script is mode 100755 in the index; check
   it in CI or an audit script. A script committed as 100644 exits 126 in CI while
   a Windows hook runs it fine. Fix with `git update-index --chmod=+x`;
