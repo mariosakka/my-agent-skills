@@ -31,6 +31,14 @@ TEST_PLAN_HEADING = re.compile(r"^#{1,6}\s+.*\b(test|testing)\b.*\b(strategy|lay
 TEST_DECISION = re.compile(r"\bcovered\b|\bN/A\b|not applicable", re.IGNORECASE)
 GUARD_SCRIPT = re.compile(r"(?:^|/)(?:scripts|tools)/check_[\w-]*(?:sync|updated|lifecycle)[\w-]*\.(?:py|sh)$", re.IGNORECASE)
 SECRET_SCANNER = re.compile(r"gitleaks|trufflehog|detect-secrets|git-secrets|secretlint", re.IGNORECASE)
+LOCALIZATION_PATH = re.compile(
+    r"(^|/)(l10n|locales?|translations?|i18n)(/|$)|(^|/)(messages|app)_[a-z]{2,3}(?:[-_][a-z]{2})?\.",
+    re.IGNORECASE,
+)
+LOCALIZATION_CHECK = re.compile(
+    r"gen-l10n|i18next|gettext|localiz|l10n|i18n|arb.*check|check.*arb|translation.*check",
+    re.IGNORECASE,
+)
 IGNORED_DIRS = {".git", ".venv", "venv", "node_modules", "build", "dist", "__pycache__"}
 
 
@@ -125,6 +133,15 @@ def audit_repo(repo):
                       if name in {".githooks/pre-push", ".husky/pre-push"}]
     hook_secret_scan = any(SECRET_SCANNER.search(path.read_text(encoding="utf-8", errors="ignore"))
                            for path in pre_push_hooks)
+    has_localization_catalogs = any(LOCALIZATION_PATH.search(name) for name in relative)
+    ci_localization_check = any(
+        LOCALIZATION_CHECK.search(path.read_text(encoding="utf-8", errors="ignore"))
+        for path in ci_files
+    )
+    hook_localization_check = any(
+        LOCALIZATION_CHECK.search(path.read_text(encoding="utf-8", errors="ignore"))
+        for path in pre_push_hooks
+    )
     all_ci_and_hooks = [path for path in ci_files]
     all_ci_and_hooks.extend(path for name, path in relative.items()
                             if name.startswith((".githooks/", ".husky/")))
@@ -146,6 +163,9 @@ def audit_repo(repo):
         ("CI runs tests (heuristic)", bool(ci_files) and ci_mentions_tests, True),
         ("secret scanning in CI", ci_secret_scan, True),
         ("secret scanning in pre-push hook", hook_secret_scan, True),
+        ("localization catalogs detected (heuristic)", has_localization_catalogs, False),
+        ("localization check in CI (heuristic)", ci_localization_check, has_localization_catalogs),
+        ("localization check in pre-push hook (heuristic)", hook_localization_check, has_localization_catalogs),
         ("developer/test guidance", dev_docs, True),
         ("source/test change guard", bool(sync_wired), True),
         ("local hook implementation present", hooks, False),

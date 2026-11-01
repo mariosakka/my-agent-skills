@@ -36,6 +36,27 @@ provide a native equivalent only where needed, keep both implementations
 behaviorally aligned, and add parity tests or shared fixtures to detect drift.
 Document the canonical CI command and each supported local invocation.
 
+For applications with user-facing text, validate localization catalogs and
+generated accessors in CI: parse/generate catalogs, detect missing or extra
+keys and placeholder mismatches, run locale/fallback/message-format tests, and
+run the stack's hard-coded-visible-string lint where available. Add a fast
+changed-project version of these checks to pre-push when practical; keep CI
+authoritative and provide a documented reasoned N/A only for products without
+user-facing copy. Keep an enforcement matrix in contributor docs that maps each
+automatable skill rule to its CI job and/or hook, and names manual review for
+rules that cannot be checked deterministically. Do not claim a rule is enforced
+merely because a script exists: test that CI and installed hooks invoke it.
+
+For performance benchmarks, retain machine-readable or clearly structured
+results with the tested commit/build, scenario, device or runner tier, OS,
+configuration, run count, and measured values. Link CI artifacts to the
+maintained performance ledger and compare like-for-like baselines. For
+device-sensitive apps, cover both a current reference tier and an older or
+lowest-supported physical device; use emulators for repeatable screening, not
+as a substitute for hardware evidence. Avoid hard CI thresholds until the
+measurement is stable and calibrated; once adopted, document the budget and
+alert/failure policy.
+
 ## API Contracts And Publication
 
 - Choose and document one source of truth for the public API contract (for

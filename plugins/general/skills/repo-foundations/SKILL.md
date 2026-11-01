@@ -17,7 +17,8 @@ infrastructure or change deployment policy merely because it appears below.
 1. Inspect the repository, any existing instructions, toolchain, tests, CI,
    release and documentation practices before changing them. Establish the
    product type, users, supported platforms, data sensitivity, and deployment
-   needs. Ask only when an unresolved decision materially changes the result.
+   needs, including whether user-facing strings require localization. Ask only
+   when an unresolved decision materially changes the result.
 2. Reuse local patterns and the language/framework's standard tools. Choose
    boundaries, naming, and tests for this project rather than copying another
    stack's architecture. Read [architecture and quality](references/architecture-and-quality.md)
@@ -37,7 +38,13 @@ infrastructure or change deployment policy merely because it appears below.
    Every feature change must add or update related tests; feature removals must
    remove or rewrite tests for behavior that no longer exists. Assess each test
    layer and record coverage or a reasoned N/A in the plan/PR.
-5. Run `python <skill-dir>/scripts/foundations_audit.py <repo>` to check
+5. For each applicable rule, identify its enforcement in a compact matrix:
+   pre-push for fast local feedback, CI for authoritative deterministic gates,
+   tests for behavioral guarantees, and documented human review where
+   automation is unreliable. Test the wiring itself. Do not put slow or
+   device-bound suites in pre-push; keep CI authoritative when hooks are absent
+   or bypassed.
+6. Run `python <skill-dir>/scripts/foundations_audit.py <repo>` to check
    observable repository foundations and identify gaps. Treat heuristic results
    as prompts for review, not proof of quality; architecture and risk decisions
    still require human judgment. Establish a small, reusable developer-tooling

@@ -16,6 +16,27 @@ applies, use a documented, reasoned bypass instead of adding noise. Record
 decisions and trade-offs in Markdown; keep API comments concise and explain only
 contracts or non-obvious invariants.
 
+## Localization And User-Facing Text
+
+For user-facing applications, keep visible text in the framework's canonical
+localization catalogs and use generated or typed accessors where supported. Do
+not scatter UI strings through widgets, views, error handlers, or notifications.
+Build variable messages with named catalog parameters, plural/select rules, and
+locale-aware date, number, and currency formatters; do not concatenate fragments
+or format values with locale-insensitive defaults. Keep stable identifiers,
+protocol values, logs, and developer-only diagnostics separate from translated
+copy. Record localization as not applicable only when the product has no
+user-facing text or the requested scope explicitly excludes it.
+
+Test catalog parsing/generation, key and placeholder parity across supported
+locales, fallback behavior, parameter substitution, plural forms, and locale-
+sensitive formatting. Add a technology-specific lint or static check for
+unlocalized visible strings where the ecosystem supports one; review its known
+false positives and narrow exceptions. Include accessibility labels and
+validation/error messages in the localization boundary. Avoid constructing text
+from separately translated fragments because grammar and word order vary by
+locale.
+
 ## Reusable Developer Tools
 
 Give each repository a small set of reusable tools for its recurring local
@@ -60,6 +81,14 @@ Keep sensitive details in an appropriately private location.
   change, measured savings, correctness/freshness trade-off, evidence commit or
   run, and a recheck trigger. Update or retire entries when behavior changes;
   do not turn one-time measurements into permanent claims without provenance.
+- For device-sensitive products, benchmark a current reference device and an
+  older or lowest-supported device with the same scenario and build mode. Record
+  device model/tier, OS, app commit/build, benchmark scenario, run count, metric
+  definitions and results, and relevant conditions such as thermal state. Keep
+  results with the performance ledger or as CI artifacts linked from it so
+  regressions and trade-offs across device tiers remain visible. Use emulators
+  for repeatable screening, but confirm hardware-dependent conclusions on
+  representative physical devices.
 
 ## Risk-Based Tests
 

@@ -131,6 +131,36 @@ class FoundationsAuditTests(unittest.TestCase):
 
         self.assertEqual(statuses["unit"], "WARN")
 
+    def test_reports_localization_catalog_and_enforcement_signals(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "lib" / "l10n").mkdir(parents=True)
+            (repo / "lib" / "l10n" / "app_en.arb").write_text("{}", encoding="utf-8")
+            workflow = repo / ".github" / "workflows" / "validate.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("run: flutter gen-l10n && python scripts/check_l10n.py", encoding="utf-8")
+            hook = repo / ".githooks" / "pre-push"
+            hook.parent.mkdir()
+            hook.write_text("python scripts/check_l10n.py", encoding="utf-8")
+
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["localization catalogs detected (heuristic)"], "PASS")
+        self.assertEqual(checks["localization check in CI (heuristic)"], "PASS")
+        self.assertEqual(checks["localization check in pre-push hook (heuristic)"], "PASS")
+
+    def test_localization_checks_are_warned_when_catalogs_exist_but_checks_are_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "locales").mkdir()
+            (repo / "locales" / "en.json").write_text("{}", encoding="utf-8")
+            (repo / ".github" / "workflows").mkdir(parents=True)
+            (repo / ".github" / "workflows" / "ci.yml").write_text("run: pytest", encoding="utf-8")
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["localization check in CI (heuristic)"], "WARN")
+        self.assertEqual(checks["localization check in pre-push hook (heuristic)"], "WARN")
+
 
 if __name__ == "__main__":
     unittest.main()

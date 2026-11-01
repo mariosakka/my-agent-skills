@@ -151,6 +151,12 @@ def test_repo_foundations_requires_measured_network_and_cache_efficiency():
         .lower()
         .split()
     )
+    pipelines = " ".join(
+        (skill / "references" / "ci-and-release.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
     assert "request counts, payload sizes" in quality
     assert "batch related lookups" in quality
     assert "deduplicate identical in-flight work" in quality
@@ -159,6 +165,8 @@ def test_repo_foundations_requires_measured_network_and_cache_efficiency():
     assert "request and performance budgets" in quality
     assert "maintained request/performance ledger" in quality
     assert "measured savings" in quality
+    assert "older or lowest-supported device" in quality
+    assert "tested commit/build" in pipelines
 
 
 def test_repo_foundations_requires_secret_scanning_in_ci_and_pre_push():
@@ -173,6 +181,30 @@ def test_repo_foundations_requires_secret_scanning_in_ci_and_pre_push():
     assert "require gitleaks or an equivalent in ci and in the installed pre-push hook" in body
     assert "scheduled full-history scan" in pipelines
     assert "must fail with installation instructions" in pipelines
+
+
+def test_repo_foundations_requires_localized_parameterized_ui_text_and_enforcement_matrix():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    quality = " ".join(
+        (skill / "references" / "architecture-and-quality.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    pipelines = " ".join(
+        (skill / "references" / "ci-and-release.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    body = " ".join((skill / "SKILL.md").read_text(encoding="utf-8").lower().split())
+    assert "canonical localization catalogs" in quality
+    assert "named catalog parameters" in quality
+    assert "plural/select rules" in quality
+    assert "placeholder mismatches" in pipelines
+    assert "hard-coded-visible-string lint" in pipelines
+    assert "enforcement in a compact matrix" in body
+    assert "ci authoritative" in body
 
 
 def test_current_repo_runs_pinned_gitleaks_in_ci_and_pre_push():
