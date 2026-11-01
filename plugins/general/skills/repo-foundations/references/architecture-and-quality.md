@@ -33,6 +33,34 @@ ledger. Record each issue's impact, severity, status, owner, workaround when
 available, and next review or follow-up. Update or close entries as fixes land.
 Keep sensitive details in an appropriately private location.
 
+## Network, Cache, And Performance Efficiency
+
+- Inventory network and expensive I/O origins before optimizing. Measure
+  representative request counts, payload sizes, latency, cache hit/miss rates,
+  and relevant startup or interaction timings; do not optimize from intuition
+  alone.
+- Reduce avoidable traffic at shared boundaries: request only needed fields,
+  batch related lookups, avoid per-item/N+1 fetches, deduplicate identical
+  in-flight work, debounce noisy user input when it preserves UX, and bundle
+  related data when that is cheaper than repeated round trips. Respect provider
+  limits and pagination rather than fetching unbounded datasets.
+- Define a cache policy per data type: identity/key, freshness/TTL, invalidation,
+  schema/version behavior, stale/offline fallback, and privacy. Use provider
+  validators such as ETag when available. Do not cache credentials or private
+  data in shared locations, and do not trade correctness for a higher hit rate.
+- Bundle immutable, small, frequently needed assets/data only when measurements
+  justify the startup/offline benefit; account for binary size, update cadence,
+  licensing, and stale bundled content. Cache or decode large media at display-
+  appropriate sizes instead of repeatedly transferring or decoding originals.
+- Set request and performance budgets for critical user flows. Protect them
+  with deterministic fake-transport tests and focused regression checks; use
+  physical-device profiling when device hardware or rendering is material.
+- Keep a maintained request/performance ledger in the repository's canonical
+  engineering or performance docs. For each optimization, record the baseline,
+  change, measured savings, correctness/freshness trade-off, evidence commit or
+  run, and a recheck trigger. Update or retire entries when behavior changes;
+  do not turn one-time measurements into permanent claims without provenance.
+
 ## Risk-Based Tests
 
 Every feature or behavior-change plan must assess each layer below, plus any
@@ -56,7 +84,8 @@ Pick the lowest-cost layers that demonstrate the behavior and its risks:
 - Security/data integrity: authentication, authorization, migrations,
   concurrent edits, backup/restore, and failure recovery as relevant.
 - Performance: representative workloads, reproducible baselines, measurable
-  budgets, and physical-device evidence when hardware affects the result.
+  budgets, network/request counts where applicable, and physical-device
+  evidence when hardware affects the result.
 - Other domain-specific checks: for example accessibility, concurrency,
   localization, offline behavior, or migration verification where relevant.
 

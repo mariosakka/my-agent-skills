@@ -112,3 +112,49 @@ def test_repo_foundations_requires_indexed_reusable_tools_and_automation():
     assert "do not create placeholder tools" in text
     assert "canonical index" in quality
     assert "development, test, ci, and release" in quality
+
+
+def test_repo_foundations_covers_environment_automation_and_issue_intake():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    operations = " ".join(
+        (skill / "references" / "operations-and-hygiene.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    pipelines = " ".join(
+        (skill / "references" / "ci-and-release.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "docker compose" in operations
+    assert "scripts or task-runner commands" in operations
+    assert "canonical developer-tool index" in operations
+    assert "seed data" in operations
+    assert "never seed production automatically" in operations
+    assert "github app" in operations
+    assert "idempotency key" in operations
+    assert "deduplicate on the server" in operations
+    assert "redaction" in operations
+    assert "dependabot" in pipelines
+    assert "auto-merge" in pipelines
+    assert "build once and promote" in pipelines
+
+
+def test_repo_foundations_requires_measured_network_and_cache_efficiency():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    quality = " ".join(
+        (skill / "references" / "architecture-and-quality.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "request counts, payload sizes" in quality
+    assert "batch related lookups" in quality
+    assert "deduplicate identical in-flight work" in quality
+    assert "cache policy per data type" in quality
+    assert "freshness/ttl, invalidation" in quality
+    assert "request and performance budgets" in quality
+    assert "maintained request/performance ledger" in quality
+    assert "measured savings" in quality

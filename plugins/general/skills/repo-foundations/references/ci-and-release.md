@@ -30,6 +30,13 @@ Document the canonical CI command and each supported local invocation.
 
 ## Dependency-Update Automation
 
+Configure an update bot such as Dependabot or Renovate for the repository's
+actual manifests and GitHub Actions. Group compatible updates where review is
+still clear, set a sensible cadence, and keep security updates visible. Check
+that lockfiles and generated dependency metadata are included. A bot config is
+not evidence that updates are healthy: verify a real pull request and its
+workflow runs.
+
 Auto-merge only patch and minor bot updates; leave major bumps (including
 GitHub Actions majors) for a human. Merge only after the required checks passed
 on the exact head commit (`--match-head-commit`), and treat a failed or
@@ -52,6 +59,17 @@ cancelled check as "leave open", not "retry blindly".
   commits, or every dependency PR fails for a reason a bot cannot fix.
 - Check the automation against real PRs before claiming it works; a workflow
   that was never triggered is untested.
+
+## Build And Deployment Pipelines
+
+Design separate, reviewable steps for validation, artifact build, signing,
+publication, and deployment. Build once and promote the same immutable artifact
+between tracks/environments when the platform supports it; record its source
+commit and checksum. Protect production credentials with environment approval
+and least privilege, keep secrets out of fork/pull-request jobs, and make
+rollback or halt procedures executable and tested. A release-note/tag workflow
+does not itself build, upload, or deploy an artifact. Verify each pipeline on a
+non-production target before claiming it is operational.
 
 ## Release
 

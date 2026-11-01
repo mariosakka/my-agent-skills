@@ -36,6 +36,55 @@ Keep an issue register with a format test, a stage-end audit script of greppable
 checks, a recurring-issues checklist, and a test-count drift check. Link each
 accepted limit to a reason and a recheck trigger.
 
+## Reproducible Environments And Seed Data
+
+- Document a clean-machine setup with exact prerequisites and one canonical
+  command for starting required local services and running checks.
+- Turn repeated setup, migration, seed, reset, and teardown steps into small
+  scripts or task-runner commands with validated inputs, safe defaults, clear
+  exit codes, and no embedded secrets. Keep them idempotent where practical,
+  test their failure paths, and list their purpose and exact invocation in the
+  canonical developer-tool index; do not leave important setup as a long manual
+  command sequence.
+- Use Docker Compose or an equivalent only when local infrastructure (such as
+  a database, cache, or queue) materially improves reproducibility. Pin service
+  versions, add readiness/health checks, use non-production credentials, and
+  document start, reset, and teardown commands. Do not add containers just to
+  satisfy a checklist when the project has no such dependency.
+- Keep schema migrations and seed data separate. Seeds should be deterministic,
+  repeatable, synthetic or sanitized, and safe to rerun. Require an explicit
+  local/test environment guard; never seed production automatically or commit
+  private/customer data. Document how test fixtures differ from developer demo
+  data and how both are reset.
+- Test the documented bootstrap and seed commands from a clean environment,
+  including failure when required services are unavailable. Keep secrets in
+  ignored local env files or a secret manager, with a committed example file
+  containing placeholders only.
+
+## Telemetry And User-Submitted Bug Reports
+
+- Treat product telemetry and an explicit support/bug report as separate data
+  flows. Document purpose, consent/opt-out, collected fields, retention,
+  access, deletion, and the destination before enabling either in production.
+- Collect the minimum useful diagnostics (for example app/build version,
+  platform/OS, device model, and a sanitized error category). Strip tokens,
+  credentials, personal identifiers, URLs with sensitive query data, and user
+  content by default. Capture screenshots or logs only after a clear user action
+  and consent; provide a preview/redaction path where feasible.
+- Route repository issue creation through a trusted backend or narrowly scoped
+  GitHub App. Never ship repository-write credentials in a client. Validate and
+  size-limit payloads, rate-limit abuse, and keep an audit trail without
+  retaining unnecessary report content.
+- Make submission retry-safe with an idempotency key. Deduplicate on the
+  server using a stable fingerprint of normalized issue category and sanitized
+  diagnostic signature, not title text alone. Preserve distinct reports when
+  meaningful context differs; add new evidence to an existing issue rather
+  than silently discarding it. Return the created/existing issue reference and
+  define retry/queue behavior when GitHub is unavailable.
+- Test redaction, consent and opt-out, payload validation, rate limits,
+  deduplication versus distinct reports, retries, and GitHub/API failure paths
+  with fakes. Do not require a live repository write in ordinary CI.
+
 ## Accidental Publication
 
 When private data reaches a remote: take a backup bundle, get explicit approval,
