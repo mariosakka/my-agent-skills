@@ -18,6 +18,9 @@ agents. Apply what fits the project.
 - **Line endings.** Add `.gitattributes` (`text eol=lf` for scripts and hooks).
   `sed -i` and editors can silently rewrite a whole tree on Windows; renormalize
   in one dedicated commit.
+- **Guard detection.** `foundations_audit.py` accepts any `scripts/` or `tools/`
+  `check_*` script named for sync, updated or lifecycle that mentions tests and is
+  referenced from CI or a hook; the name need not be `check_docs_sync.py`.
 - **Per-commit policy gates.** Docs-with-code and tests-with-code checks shared
   by the hook and CI, with a visible opt-out trailer such as
   `Docs: n/a (reason)` instead of silent bypasses. Expect them to reject merged

@@ -29,6 +29,7 @@ TEST_LAYERS = {
 }
 TEST_PLAN_HEADING = re.compile(r"^#{1,6}\s+.*\b(test|testing)\b.*\b(strategy|layers|coverage|matrix|plan)\b", re.IGNORECASE)
 TEST_DECISION = re.compile(r"\bcovered\b|\bN/A\b|not applicable", re.IGNORECASE)
+GUARD_SCRIPT = re.compile(r"(?:^|/)(?:scripts|tools)/check_[\w-]*(?:sync|updated|lifecycle)[\w-]*\.(?:py|sh)$", re.IGNORECASE)
 IGNORED_DIRS = {".git", ".venv", "venv", "node_modules", "build", "dist", "__pycache__"}
 
 
@@ -120,14 +121,14 @@ def audit_repo(repo):
     all_ci_and_hooks = [path for path in ci_files]
     all_ci_and_hooks.extend(path for name, path in relative.items()
                             if name.startswith((".githooks/", ".husky/")))
-    has_docs_guard = any(
-        re.search(r"docs?[_ -]?sync|check_docs_sync", path.read_text(encoding="utf-8", errors="ignore"), re.IGNORECASE)
-        for path in all_ci_and_hooks
-    )
-    checker = relative.get("scripts/check_docs_sync.py")
-    sync_wired = checker and "check_test_sync" in checker.read_text(encoding="utf-8", errors="ignore") and any(
-        "check_docs_sync.py" in path.read_text(encoding="utf-8", errors="ignore")
-        for path in all_ci_and_hooks
+    guard_files = [path for name, path in relative.items() if GUARD_SCRIPT.search(name)]
+    texts = [path.read_text(encoding="utf-8", errors="ignore") for path in all_ci_and_hooks]
+    has_docs_guard = any(re.search(r"docs?[_ -]?sync|check_docs_sync", text, re.IGNORECASE)
+                         or any(guard.name in text for guard in guard_files) for text in texts)
+    sync_wired = any(
+        "test" in guard.read_text(encoding="utf-8", errors="ignore").lower()
+        and any(guard.name in text for text in texts)
+        for guard in guard_files
     )
 
     checks = [

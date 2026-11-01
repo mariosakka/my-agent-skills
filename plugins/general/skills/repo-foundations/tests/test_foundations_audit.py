@@ -78,6 +78,21 @@ class FoundationsAuditTests(unittest.TestCase):
 
         self.assertEqual(checks["tracked scripts are executable"], "INFO")
 
+    def test_recognizes_a_differently_named_wired_guard_script(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "scripts").mkdir()
+            (repo / "scripts" / "check_test_lifecycle.py").write_text("# tests and docs", encoding="utf-8")
+            (repo / ".githooks").mkdir()
+            (repo / ".githooks" / "pre-push").write_text("python scripts/check_test_lifecycle.py", encoding="utf-8")
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+            self.assertEqual(checks["source/test change guard"], "PASS")
+            self.assertEqual(checks["docs/test synchronization guard"], "PASS")
+
+            (repo / ".githooks" / "pre-push").write_text("echo nothing", encoding="utf-8")
+            unwired = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+            self.assertEqual(unwired["source/test change guard"], "WARN")
+
     def test_covered_layer_needs_existing_test_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
