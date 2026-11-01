@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
+    inputs:
+      target_ref:
+        description: Branch or commit to validate instead of the workflow ref
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -14,10 +19,17 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      validated_sha: ${{ steps.validated-revision.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.target_ref || github.ref }}
+
+      - name: Capture validated revision
+        id: validated-revision
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Scan repository history for secrets
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
@@ -113,7 +125,7 @@ jobs:
     if: >-
       success() &&
       github.event_name == 'workflow_dispatch' &&
-      github.ref == 'refs/heads/release-please--branches--master'
+      inputs.target_ref == 'release-please--branches--master'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -123,7 +135,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          VALIDATED_SHA: ${{ github.sha }}
+          VALIDATED_SHA: ${{ needs.validate.outputs.validated_sha }}
         run: |
           branch=release-please--branches--master
           pr_json="$(gh pr list --state open --base master --head "$branch" \

@@ -41,4 +41,4 @@ jobs:
             exit 1
           fi
 
-          gh workflow run validate.yml --ref "$branch"
+          gh workflow run validate.yml --ref master -f target_ref="$branch"

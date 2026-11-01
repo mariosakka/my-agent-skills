@@ -195,11 +195,13 @@ def test_release_please_auto_merge_requires_successful_validation_of_exact_head(
     release = (root / ".github" / "workflows" / "release-please.yml").read_text(encoding="utf-8").lower()
     validate = (root / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8").lower()
     assert "actions: write" in release
-    assert "gh workflow run validate.yml --ref \"$branch\"" in release
+    assert 'gh workflow run validate.yml --ref master -f target_ref="$branch"' in release
     assert "auto-merge-release-please:" in validate
     assert "needs: validate" in validate
     assert "github.event_name == 'workflow_dispatch'" in validate
-    assert "refs/heads/release-please--branches--master" in validate
+    assert "inputs.target_ref == 'release-please--branches--master'" in validate
+    assert "validated_sha: ${{ steps.validated-revision.outputs.sha }}" in validate
+    assert "needs.validate.outputs.validated_sha" in validate
     assert "app/github-actions" in validate
     assert '"$pr_sha" != "$validated_sha"' in validate
     assert "--match-head-commit \"$validated_sha\"" in validate
