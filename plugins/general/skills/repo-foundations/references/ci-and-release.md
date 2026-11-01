@@ -30,6 +30,10 @@ obsolete tests to be updated or removed; standalone test deletion requires a
 documented reason. Provide a narrow reasoned bypass for changes where tests are
 not applicable.
 
+If a repository maintains a test index, enforce its two-way drift check in CI
+and, where fast, pre-push. See [indexes and inventories](indexes-and-inventories.md)
+for the consistency contract and when an index is worthwhile.
+
 Prefer one platform-neutral task runner for developer checks. When a required
 check depends on a shell or platform unavailable to supported contributors,
 provide a native equivalent only where needed, keep both implementations

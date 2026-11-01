@@ -107,12 +107,33 @@ def test_repo_foundations_requires_indexed_reusable_tools_and_automation():
         .lower()
         .split()
     )
-    assert "reusable developer-tooling set" in text
-    assert "canonical developer entrypoint" in text
-    assert "actively look for repeated" in text
-    assert "do not create placeholder tools" in text
-    assert "canonical index" in quality
-    assert "development, test, ci, and release" in quality
+    assert "canonical developer-tool index" in text
+    assert "automate repeated tasks" in text
+    assert "canonical developer-tool index" in quality
+    assert "avoid duplicate wrappers and placeholder tools" in quality
+
+
+def test_repo_foundations_requires_useful_indexes_and_test_index_drift_checks():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    indexes = " ".join(
+        (skill / "references" / "indexes-and-inventories.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    pipelines = " ".join(
+        (skill / "references" / "ci-and-release.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "features/modules" in indexes
+    assert "performance/optimizations" in indexes
+    assert "every discovered test" in indexes
+    assert "every indexed test entry resolves" in indexes
+    assert "both directions" in indexes
+    assert "editing the index also runs the check" in indexes
+    assert "two-way drift check" in pipelines
 
 
 def test_repo_foundations_covers_environment_automation_and_issue_intake():
@@ -178,7 +199,7 @@ def test_repo_foundations_requires_secret_scanning_in_ci_and_pre_push():
         .lower()
         .split()
     )
-    assert "require gitleaks or an equivalent in ci and in the installed pre-push hook" in body
+    assert "require gitleaks or an equivalent in ci and the installed pre-push hook" in body
     assert "scheduled full-history scan" in pipelines
     assert "must fail with installation instructions" in pipelines
 
@@ -203,8 +224,8 @@ def test_repo_foundations_requires_localized_parameterized_ui_text_and_enforceme
     assert "plural/select rules" in quality
     assert "placeholder mismatches" in pipelines
     assert "hard-coded-visible-string lint" in pipelines
-    assert "enforcement in a compact matrix" in body
-    assert "ci authoritative" in body
+    assert "map each applicable rule" in body
+    assert "ci remains authoritative" in body
 
 
 def test_current_repo_runs_pinned_gitleaks_in_ci_and_pre_push():

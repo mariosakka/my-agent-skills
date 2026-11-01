@@ -161,6 +161,35 @@ class FoundationsAuditTests(unittest.TestCase):
         self.assertEqual(checks["localization check in CI (heuristic)"], "WARN")
         self.assertEqual(checks["localization check in pre-push hook (heuristic)"], "WARN")
 
+    def test_test_index_requires_two_way_drift_check_in_ci_and_pre_push(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "docs").mkdir()
+            (repo / "docs" / "test-index.md").write_text("tests", encoding="utf-8")
+            workflow = repo / ".github" / "workflows" / "validate.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("run: python scripts/check_test_index.py", encoding="utf-8")
+            hook = repo / ".githooks" / "pre-push"
+            hook.parent.mkdir()
+            hook.write_text("python scripts/check_test_index.py", encoding="utf-8")
+
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["test index detected (heuristic)"], "PASS")
+        self.assertEqual(checks["test-index drift check in CI (heuristic)"], "PASS")
+        self.assertEqual(checks["test-index drift check in pre-push hook (heuristic)"], "PASS")
+
+    def test_test_index_warns_when_drift_check_is_not_wired(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "tests").mkdir()
+            (repo / "tests" / "index.md").write_text("tests", encoding="utf-8")
+
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["test-index drift check in CI (heuristic)"], "WARN")
+        self.assertEqual(checks["test-index drift check in pre-push hook (heuristic)"], "WARN")
+
 
 if __name__ == "__main__":
     unittest.main()

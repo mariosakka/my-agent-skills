@@ -8,82 +8,55 @@ description: >-
 
 # Repository Foundations
 
-Use this skill when asked to create a repository or establish its engineering
-standards. Preserve the user's requested scope and existing work; do not add
-infrastructure or change deployment policy merely because it appears below.
+Apply this skill to the user's requested scope. Inspect existing conventions
+first; preserve existing work and avoid speculative infrastructure.
+
+## Rulesets
+
+1. **Structure and discovery.** Follow ecosystem conventions, keep boundaries
+   testable, localize user-facing text, and make important knowledge easy to
+   find. Read [architecture and quality](references/architecture-and-quality.md)
+   and [indexes and inventories](references/indexes-and-inventories.md).
+2. **Confidence and enforcement.** Assess relevant test layers for every
+   feature; additions, changes, and removals must keep tests and indexes aligned.
+   Put fast checks in pre-push and deterministic authoritative gates in CI. Read
+   [CI and release](references/ci-and-release.md).
+3. **Operations and protection.** Make setup, data, performance, telemetry,
+   publication, and cleanup reproducible and safe for the product. Read
+   [operations and hygiene](references/operations-and-hygiene.md) and the CI
+   reference for delivery rules.
 
 ## Workflow
 
-1. Inspect the repository, any existing instructions, toolchain, tests, CI,
-   release and documentation practices before changing them. Establish the
-   product type, users, supported platforms, data sensitivity, and deployment
-   needs, including whether user-facing strings require localization. Ask only
-   when an unresolved decision materially changes the result.
-2. Reuse local patterns and the language/framework's standard tools. Choose
-   boundaries, naming, and tests for this project rather than copying another
-   stack's architecture. Read [architecture and quality](references/architecture-and-quality.md)
-   for structure, documentation, and risk-based test decisions.
-3. For CI, hooks, publication, or release work, read
-   [CI and release](references/ci-and-release.md). A local hook is advisory;
-   the corresponding required CI gate must not depend on its installation.
-   Read [operations and hygiene](references/operations-and-hygiene.md) for
-   executable bits, post-push CI verification, skipped-test handling, line
-   endings, registers, device runs, delegated agents and signing.
-   Prefer platform-neutral developer checks; when supported contributors need
-   different shells, provide tested native equivalents and document their parity.
-4. Implement the requested foundations with the fewest files and dependencies
-   that cover the real needs. Include runnable checks for new behavior, update
-   the actual callers and canonical docs, and run the relevant checks. Report
-   failures, skipped checks, assumptions, and unverified platform support.
-   Every feature change must add or update related tests; feature removals must
-   remove or rewrite tests for behavior that no longer exists. Assess each test
-   layer and record coverage or a reasoned N/A in the plan/PR.
-5. For each applicable rule, identify its enforcement in a compact matrix:
-   pre-push for fast local feedback, CI for authoritative deterministic gates,
-   tests for behavioral guarantees, and documented human review where
-   automation is unreliable. Test the wiring itself. Do not put slow or
-   device-bound suites in pre-push; keep CI authoritative when hooks are absent
-   or bypassed.
-6. Run `python <skill-dir>/scripts/foundations_audit.py <repo>` to check
-   observable repository foundations and identify gaps. Treat heuristic results
-   as prompts for review, not proof of quality; architecture and risk decisions
-   still require human judgment. Establish a small, reusable developer-tooling
-   set for recurring project tasks. Index each script/tool and its purpose and invocation in the canonical
-   developer entrypoint (for example, `make help`, `just --list`, or
-   `docs/development.md`). As work proceeds, actively look for repeated or
-   error-prone development, test, CI, and release steps that are worth
-   automating; add deterministic, tested helpers when they materially improve
-   reliability or reduce toil. Prefer extending an existing task runner or
-   script over adding duplicate wrappers, and do not create placeholder tools
-   just to satisfy this baseline.
+1. Inspect product constraints, source layout, tests, docs, toolchain, hooks, CI,
+   release process, and current risks. Ask only about decisions that materially
+   change the solution.
+2. Select applicable rulesets; record justified N/A decisions. Avoid adding
+   indexes or tools that do not improve navigation or repeatability.
+3. Implement the smallest coherent change. Update callers, tests, indexes, and
+   canonical docs together. Automate repeated tasks with tested helpers and keep
+   a canonical developer-tool index of purpose, prerequisites, and invocation.
+4. Map each applicable rule to a test, pre-push check, CI gate, or human review.
+   Test the enforcement wiring. Keep slow/device suites out of pre-push; CI
+   remains authoritative if hooks are missing or bypassed.
+5. Run `python <skill-dir>/scripts/foundations_audit.py <repo>` as a heuristic
+   gap check, then run relevant project checks. Verify remote CI before claiming
+   a push is green. Report failures, skips, assumptions, and unverified support.
 
-## Privacy And Workspace Safety
+## Safety
 
-Never commit or publish secrets, personal files, private exports, screenshots,
-local databases, machine-specific configuration, or sensitive identifiers
-without explicit authorization. Use sanitized fixtures and appropriate ignore
-rules. Before committing or publishing, review the actual staged diff and
-artifacts, including contents and history when relevant; use an established
-secret scanner. Require Gitleaks or an equivalent in CI and in the installed
-pre-push hook; CI must remain authoritative if hooks are unavailable or
-bypassed. Make missing local scanner installation fail clearly rather than
-silently skipping. Scan proposed commits and run a full-history scan at setup
-and on a schedule. Keep the scanner version/config consistent, narrowly
-document reviewed false-positive exceptions with an owner and expiry, and
-never suppress broad paths to obtain a green build. If a credential is found,
-stop publication and revoke/rotate it; deleting the text alone does not make an
-exposed credential safe. Filename checks alone cannot prove safety. If
-ownership or sensitivity is unclear, leave the item out and ask.
+Never publish secrets, personal files, private exports, screenshots, local
+databases, machine-specific configuration, or sensitive identifiers without
+authorization. Review staged content and artifacts; require Gitleaks or an
+equivalent in CI and the installed pre-push hook. Keep exceptions narrow,
+owned, and time-bounded. If a credential is exposed, revoke/rotate it; removing
+the text alone is insufficient.
 
-For a read-only inventory, run `python <skill-dir>/scripts/repo_check.py <repo>`.
-It reports Git status, worktrees, and suspicious staged filenames; it does not
-inspect content, scan history, or guarantee that a commit is safe to publish.
-Review its warnings and Git's actual staged diff before any publication.
-
-Clean up temporary files created by the task. Close delegated agents and inspect
-their worktrees; remove a worktree only after verifying it is inactive, clean,
-its commits are retained, and ignored/untracked files have been inspected and
-preserved or their removal explicitly authorized. Delete a branch only with
-authorization and after verifying its commits are retained. Never remove unrelated user files, caches,
-worktrees, branches, or uncommitted changes. Use `git worktree prune --dry-run`
-before pruning stale metadata, and report anything that cannot be safely cleaned.
+Use `python <skill-dir>/scripts/repo_check.py <repo>` for a read-only status,
+worktree, and staged-filename inventory; it does not inspect content or certify
+publication safety. Remove only task-created temporary files. Before removing a
+delegated worktree, verify it is inactive and clean, its commits are retained,
+and ignored/untracked data is inspected and preserved or explicitly authorized
+for removal. Use `git worktree prune --dry-run` before pruning metadata. Delete
+branches only with authorization and after verifying commit retention. Never
+remove unrelated user changes, caches, branches, or worktrees.

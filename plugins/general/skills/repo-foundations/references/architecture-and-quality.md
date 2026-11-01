@@ -39,14 +39,13 @@ locale.
 
 ## Reusable Developer Tools
 
-Give each repository a small set of reusable tools for its recurring local
-development, test, CI, and release tasks, using the ecosystem's natural task
-runner or scripts directory. Keep one canonical index with each tool's purpose,
-prerequisites and exact invocation. During implementation, actively identify
-repeated or failure-prone manual steps that can be made deterministic; automate
-them when doing so materially improves repeatability or reduces toil. Test
-scripts, avoid duplicate wrappers and one-off abstractions, and do not add
-placeholder tools without a real recurring use.
+Automate repeated or failure-prone development, test, CI, and release tasks
+when doing so materially improves repeatability or reduces toil. Use the
+ecosystem's task runner, test scripts, and one canonical developer-tool index;
+avoid duplicate wrappers and placeholder tools. See
+[indexes and inventories](indexes-and-inventories.md) for tool, test, feature, contract, decision,
+workflow, issue, and optimization catalogs, including reciprocal test-index
+drift checks.
 
 Maintain known issues in the project's existing issue tracker or one canonical
 document; link to it from contributor documentation instead of duplicating a
@@ -81,6 +80,8 @@ Keep sensitive details in an appropriately private location.
   change, measured savings, correctness/freshness trade-off, evidence commit or
   run, and a recheck trigger. Update or retire entries when behavior changes;
   do not turn one-time measurements into permanent claims without provenance.
+  Maintain one index of optimization candidates and outcomes, linking each item
+  to its evidence and the canonical ledger rather than duplicating measurements.
 - For device-sensitive products, benchmark a current reference device and an
   older or lowest-supported device with the same scenario and build mode. Record
   device model/tier, OS, app commit/build, benchmark scenario, run count, metric

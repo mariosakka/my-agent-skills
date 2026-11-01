@@ -5,12 +5,8 @@ agents. Apply what fits the project.
 
 ## Git And CI
 
-- **Secret scanning.** Run Gitleaks (or an equivalent) in PR/push CI, a
-  scheduled full-history check, and the installed pre-push hook. Pin the scanner
-  version/config; fail clearly when a local hook dependency is missing. Keep
-  allowlists narrow, reviewed, owned, and time-bounded. A finding blocks
-  publication until the credential is revoked/rotated; removing it from the
-  latest file does not remove exposure from Git history.
+- **Policy gates.** Use [CI and release](ci-and-release.md) as the source of
+  truth for CI, hook, secret-scanning, and source/test synchronization rules.
 - **Executable bits.** Every tracked script is mode 100755 in the index; check
   it in CI or an audit script. A script committed as 100644 exits 126 in CI while
   a Windows hook runs it fine. Fix with `git update-index --chmod=+x`;
@@ -24,13 +20,6 @@ agents. Apply what fits the project.
 - **Line endings.** Add `.gitattributes` (`text eol=lf` for scripts and hooks).
   `sed -i` and editors can silently rewrite a whole tree on Windows; renormalize
   in one dedicated commit.
-- **Guard detection.** `foundations_audit.py` accepts any `scripts/` or `tools/`
-  `check_*` script named for sync, updated or lifecycle that mentions tests and is
-  referenced from CI or a hook; the name need not be `check_docs_sync.py`.
-- **Per-commit policy gates.** Docs-with-code and tests-with-code checks shared
-  by the hook and CI, with a visible opt-out trailer such as
-  `Docs: n/a (reason)` instead of silent bypasses. Expect them to reject merged
-  agent commits that lack docs.
 - **Staging.** `git add -A` after tooling runs picks up generated files and large
   traces. Add an ignore rule when adding the tool that writes a new output folder.
 - **Scheduled live checks.** Alert when they stop producing evidence, not only
