@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "name": "general",
   "displayName": "General",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports, teaching explanations from any source material",
   "compat": {
     "source": "native",

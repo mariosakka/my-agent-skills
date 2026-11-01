@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.4.0...general-v0.5.0) (2026-11-01)
+
+
+### Features
+
+* auto-merge validated release please PRs ([a48ed10](https://github.com/mariosakka/my-agent-skills/commit/a48ed10b0d14ed36ceeb16090a102e4852394740))
+* **general:** add dependency-update auto-merge guidance to repo-foundations ([72b32fb](https://github.com/mariosakka/my-agent-skills/commit/72b32fbf513c785e24c87648dd28a57f92f7eb2f))
+* **general:** add operations and hygiene guidance to repo-foundations ([9a75374](https://github.com/mariosakka/my-agent-skills/commit/9a75374d84bda8fd052916ffdf1c9dfa08919848))
+* **general:** audit tracked scripts for a missing executable bit ([5d5b535](https://github.com/mariosakka/my-agent-skills/commit/5d5b535cba7398652e095e235a7c453df67f1220))
+* **repo-foundations:** enforce secret and API contract checks ([9a5da8e](https://github.com/mariosakka/my-agent-skills/commit/9a5da8ef03262d0b84ff801966012dd40c9619e6))
+
+
+### Bug Fixes
+
+* **general:** recognize any wired docs/test guard script in the foundations audit ([324db7d](https://github.com/mariosakka/my-agent-skills/commit/324db7dec4ed436a51c4d506102cdbf070f37cc6))
+
 ## [0.4.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.3.0...general-v0.4.0) (2026-10-31)
 
 
