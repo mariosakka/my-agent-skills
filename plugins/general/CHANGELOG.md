@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.5.0...general-v0.6.0) (2026-11-01)
+
+
+### Features
+
+* **repo-foundations:** enforce localization and device benchmarks ([c721a99](https://github.com/mariosakka/my-agent-skills/commit/c721a99a1f1490fc0cf433f7141babeaac80c374))
+
 ## [0.5.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.4.0...general-v0.5.0) (2026-11-01)
 
 
