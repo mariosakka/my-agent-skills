@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.6.0...general-v0.7.0) (2026-11-01)
+
+
+### Features
+
+* **repo-foundations:** index knowledge and group rulesets ([a10562f](https://github.com/mariosakka/my-agent-skills/commit/a10562f094ef4ddda1608129acf5901a139439c9))
+
 ## [0.6.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.5.0...general-v0.6.0) (2026-11-01)
 
 
