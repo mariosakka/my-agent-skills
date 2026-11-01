@@ -107,3 +107,38 @@ jobs:
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --title "Scheduled validation failed ($(date -u +%F))" \
             --body "The weekly validate workflow failed. See $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+  auto-merge-release-please:
+    needs: validate
+    if: >-
+      success() &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/release-please--branches--master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Verify Release Please PR and squash-merge validated SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VALIDATED_SHA: ${{ github.sha }}
+        run: |
+          branch=release-please--branches--master
+          pr_json="$(gh pr list --state open --base master --head "$branch" \
+            --json number,headRefName,headRefOid,author --jq '.[0]')"
+          if [[ -z "$pr_json" || "$pr_json" == "null" ]]; then
+            echo "No open Release Please PR; nothing to merge."
+            exit 0
+          fi
+
+          author="$(jq -r '.author.login' <<<"$pr_json")"
+          pr_sha="$(jq -r '.headRefOid' <<<"$pr_json")"
+          pr_number="$(jq -r '.number' <<<"$pr_json")"
+          if [[ "$author" != "app/github-actions" || "$pr_sha" != "$VALIDATED_SHA" ]]; then
+            echo "Release PR identity/head changed after validation; refusing auto-merge." >&2
+            exit 1
+          fi
+
+          gh pr merge "$pr_number" --squash --match-head-commit "$VALIDATED_SHA"

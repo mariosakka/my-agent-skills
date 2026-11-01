@@ -194,8 +194,8 @@ PR creates the plugin's versioned GitHub Release. Current package versions in
 new Conventional Commits determine future version bumps. Repository
 administrators must allow GitHub Actions to create pull requests for the
 workflow's `GITHUB_TOKEN`. The Release Please workflow dispatches full validation
-for its generated PR because `GITHUB_TOKEN`-created PR events may await approval;
-the `Auto-merge Release Please` workflow acts only on a successful validation run
-for the generated branch (successful runs on other branches are ignored), verifies
-the bot author and exact current PR head SHA, then squash-merges that commit. A
-stale validation result cannot merge a newer PR head.
+for its generated PR because `GITHUB_TOKEN`-created PR events may await approval.
+The `validate` workflow's merge job runs only on that dispatched branch after the
+full validation job succeeds, verifies the bot author and exact current PR head
+SHA, then squash-merges that commit. A stale result or another branch cannot
+merge a newer PR head.
