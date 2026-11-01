@@ -28,6 +28,31 @@ provide a native equivalent only where needed, keep both implementations
 behaviorally aligned, and add parity tests or shared fixtures to detect drift.
 Document the canonical CI command and each supported local invocation.
 
+## Dependency-Update Automation
+
+Auto-merge only patch and minor bot updates; leave major bumps (including
+GitHub Actions majors) for a human. Merge only after the required checks passed
+on the exact head commit (`--match-head-commit`), and treat a failed or
+cancelled check as "leave open", not "retry blindly".
+
+- Prefer native auto-merge plus branch protection. If protection is unavailable
+  (for example a private repo on a free plan), `gh pr merge --auto` and the
+  repo setting may do nothing; use a small workflow that polls the required
+  workflows for the head SHA and then merges, and record the gap as a known
+  issue.
+- Bot PRs get a read-only token and no secrets under `pull_request`. Use
+  `pull_request_target` only for metadata and merge, never check out or run PR
+  code, give write scope at job level only, pin actions to full SHAs, set
+  `timeout-minutes`, and filter on the bot's login. Read update type from a
+  pinned metadata action, not from the PR title.
+- Bot branches go stale after a CI or config fix lands on the default branch:
+  the PR still carries the old result. Rebase through the bot's own mechanism
+  or let it do so; do not merge on an old green run.
+- Commit-message, docs and test-with-code policy gates must skip or exempt bot
+  commits, or every dependency PR fails for a reason a bot cannot fix.
+- Check the automation against real PRs before claiming it works; a workflow
+  that was never triggered is untested.
+
 ## Release
 
 Distinguish application artifacts, libraries, containers, and deployment
