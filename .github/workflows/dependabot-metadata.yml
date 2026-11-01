@@ -1,0 +1,48 @@
+name: Dependabot metadata
+
+on:
+  pull_request_target:
+    branches: [master]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  metadata:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'mariosakka/my-agent-skills'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Read Dependabot update metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write trusted metadata artifact
+        env:
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/dependabot-metadata"
+          jq -n \
+            --arg repository "$REPOSITORY" \
+            --arg pr_number "$PR_NUMBER" \
+            --arg head_sha "$PR_SHA" \
+            --arg update_type "$UPDATE_TYPE" \
+            '{repository: $repository, pr_number: $pr_number, head_sha: $head_sha, update_type: $update_type}' \
+            > "$RUNNER_TEMP/dependabot-metadata/metadata.json"
+
+      - name: Upload metadata for the privileged merge gate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dependabot-metadata
+          path: ${{ runner.temp }}/dependabot-metadata/metadata.json
+          if-no-files-found: error
+          retention-days: 1

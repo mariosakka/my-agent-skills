@@ -22,6 +22,8 @@ Select the indexes that fit the repository:
 - Known issues: impact, severity, state, owner, workaround, and next review.
 - Performance/optimizations: candidate or completed change, baseline, measured
   result, evidence, trade-offs, and recheck trigger.
+- Agent instructions: supported files, line limits, precedence, and canonical
+  links to detailed rules.
 
 Keep each topic's detailed records in one canonical location and make indexes
 link to them. Prefer generating indexes from structured metadata or discovery

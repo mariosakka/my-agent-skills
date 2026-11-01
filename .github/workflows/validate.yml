@@ -22,6 +22,10 @@ jobs:
     outputs:
       validated_sha: ${{ steps.validated-revision.outputs.sha }}
     steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -41,8 +45,8 @@ jobs:
       - name: Check documentation and source/test changes
         if: github.event_name == 'pull_request'
         env:
-          DOC_SYNC_BYPASS_REASON: ${{ github.event.pull_request.body }}
-          TEST_SYNC_BYPASS_REASON: ${{ github.event.pull_request.body }}
+          DOC_SYNC_BYPASS_REASON: ${{ github.actor == 'dependabot[bot]' && 'Dependency version update; full validation still runs.' || github.event.pull_request.body }}
+          TEST_SYNC_BYPASS_REASON: ${{ github.actor == 'dependabot[bot]' && 'Dependency version update; full validation still runs.' || github.event.pull_request.body }}
         run: python scripts/check_docs_sync.py "${{ github.event.pull_request.base.sha }}" "$GITHUB_SHA"
 
       - name: Check documentation and source/test changes on push
@@ -64,10 +68,6 @@ jobs:
       - name: PowerShell validation mirror
         shell: pwsh
         run: ./scripts/validate.ps1
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
 
       - name: Repository foundations audit
         run: python plugins/general/skills/repo-foundations/scripts/foundations_audit.py .

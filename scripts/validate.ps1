@@ -171,6 +171,12 @@ foreach ($ShellFile in $ShellFiles) {
     }
 }
 
+$InstructionCheck = Join-Path $RepoRoot "plugins/general/skills/repo-foundations/scripts/check_agent_instructions.py"
+if (Test-Path -LiteralPath $InstructionCheck -PathType Leaf) {
+    & python $InstructionCheck $RepoRoot
+    if ($LASTEXITCODE -ne 0) { Add-Failure "agent instruction file checks" }
+}
+
 if ($Failures.Count -gt 0) {
     foreach ($Failure in $Failures) { Write-Output "FAIL: $Failure" }
     Write-Output "validate.ps1: $($Failures.Count) failure(s)"

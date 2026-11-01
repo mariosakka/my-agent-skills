@@ -6,4 +6,5 @@ if ! command -v gitleaks >/dev/null 2>&1; then
   exit 1
 fi
 gitleaks git --redact --no-banner --log-opts="--all --full-history"
+python "$repo_root/plugins/general/skills/repo-foundations/scripts/check_agent_instructions.py" "$repo_root"
 exec python "$repo_root/scripts/check_docs_sync.py" --pre-push --remote "$1"

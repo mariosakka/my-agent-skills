@@ -190,6 +190,37 @@ class FoundationsAuditTests(unittest.TestCase):
         self.assertEqual(checks["test-index drift check in CI (heuristic)"], "WARN")
         self.assertEqual(checks["test-index drift check in pre-push hook (heuristic)"], "WARN")
 
+    def test_agent_instruction_validator_is_required_in_ci_and_pre_push_when_files_exist(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "AGENTS.md").write_text("short rules", encoding="utf-8")
+            workflow = repo / ".github" / "workflows" / "validate.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("run: bash scripts/validate.sh", encoding="utf-8")
+            scripts = repo / "scripts"
+            scripts.mkdir()
+            (scripts / "validate.sh").write_text(
+                "python plugins/general/skills/repo-foundations/scripts/check_agent_instructions.py .",
+                encoding="utf-8",
+            )
+            hook = repo / ".githooks" / "pre-push"
+            hook.parent.mkdir()
+            hook.write_text("python scripts/check_agent_instructions.py .", encoding="utf-8")
+
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["agent instruction validator in CI (heuristic)"], "PASS")
+        self.assertEqual(checks["agent instruction validator in pre-push (heuristic)"], "PASS")
+
+    def test_agent_instruction_validator_wiring_gaps_are_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "CLAUDE.md").write_text("short rules", encoding="utf-8")
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["agent instruction validator in CI (heuristic)"], "WARN")
+        self.assertEqual(checks["agent instruction validator in pre-push (heuristic)"], "WARN")
+
 
 if __name__ == "__main__":
     unittest.main()

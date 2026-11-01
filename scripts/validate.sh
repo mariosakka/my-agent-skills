@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Drift + lint checks for the multi-agent marketplace. Requires bash + jq.
+# Drift + lint checks for the multi-agent marketplace. Requires bash, jq, and Python.
 # Prints one line per failure; exits non-zero if any.
 set -u
 cd "$(dirname "$0")/.." || exit 2
@@ -121,6 +121,9 @@ check_marketplace "$AGENTS_MKT"
 while IFS= read -r sh; do
   if [ "$(tr -cd '\015' < "$sh" | wc -c)" -gt 0 ]; then fail "$sh: contains CRLF line endings"; fi
 done < <(find . -name '*.sh' -not -path './.git/*' -not -path './node_modules/*')
+
+python plugins/general/skills/repo-foundations/scripts/check_agent_instructions.py . \
+  || fail "agent instruction file checks"
 
 if [ "$fails" -gt 0 ]; then echo "validate.sh: $fails failure(s)"; exit 1; fi
 echo "validate.sh: OK (${#skills[@]} skills, ${#plugin_names[@]} plugins)"

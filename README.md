@@ -141,7 +141,7 @@ pip install -r requirements-dev.txt
 bash scripts/run_tests.sh            # all tests; extra args go to pytest, e.g. -k pr_audit
 ```
 
-The shell-script tests need `bash` and `jq` (they skip when missing); the PDF tests need `fpdf2`, `Pillow` and `Pygments` (they skip when missing).
+The shell-script tests need `bash` and `jq` (they skip when missing); the PDF tests need `fpdf2`, `Pillow` and `Pygments` (they skip when missing). The agent-instruction checker tests the 300-line ceiling and inline local Markdown links for `AGENTS.md`/`CLAUDE.md`.
 
 ### Test Strategy
 
@@ -164,7 +164,11 @@ when behavior changes, and remove or rewrite tests when their feature is removed
 
 ## CI
 
-`.github/workflows/validate.yml` runs the Bash validator and its PowerShell mirror on every push, pull request, and weekly. They check manifest JSON and version/name consistency, marketplace sources, skill frontmatter, duplicate skills, and LF-only shell scripts. Drift between formats fails the build.
+`.github/workflows/validate.yml` runs the Bash validator and its PowerShell mirror on every push, pull request, and weekly. They check manifest JSON and version/name consistency, marketplace sources, skill frontmatter, duplicate skills, LF-only shell scripts, and agent instruction length/inline local links. Drift between formats fails the build.
+
+Dependabot checks the repository's Python development dependencies and GitHub Actions weekly. Non-major updates are grouped by ecosystem; major updates remain separate for review. Dependency PRs run the full validation and test workflow. A read-only `pull_request_target` workflow extracts metadata without checking out PR code; a separate privileged `workflow_run` gate auto-merges only patch/minor updates after every check and the `validate` check pass, confirming the same PR head SHA immediately before squash merge. Major, unknown, failed, cancelled, or stale updates remain open for review.
+
+Run `python plugins/general/skills/repo-foundations/scripts/check_agent_instructions.py .` to check every `AGENTS.md` and `CLAUDE.md` for the 300-line ceiling and broken inline local Markdown links. It uses only the Python standard library and is also called by both validators and the installed pre-push hook.
 
 Run the same repository checks natively on Windows with `powershell -NoProfile -File scripts/validate.ps1`; CI continues to use the Bash version.
 

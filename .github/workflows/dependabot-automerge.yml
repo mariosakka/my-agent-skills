@@ -1,0 +1,94 @@
+name: Dependabot auto-merge
+
+on:
+  workflow_run:
+    workflows: [Dependabot metadata]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-patch-and-minor:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.actor.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Download metadata from the exact completed workflow
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: dependabot-metadata
+          path: ${{ runner.temp }}/dependabot-metadata
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+
+      - name: Verify bot PR, update type, and exact-head checks before merging
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          METADATA_FILE: ${{ runner.temp }}/dependabot-metadata/metadata.json
+        run: |
+          set -euo pipefail
+
+          repository="$(jq -r '.repository' "$METADATA_FILE")"
+          pr_number="$(jq -r '.pr_number' "$METADATA_FILE")"
+          expected_sha="$(jq -r '.head_sha' "$METADATA_FILE")"
+          update_type="$(jq -r '.update_type' "$METADATA_FILE")"
+
+          if [[ "$repository" != "$GH_REPO" || ! "$pr_number" =~ ^[0-9]+$ || ! "$expected_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid or mismatched Dependabot metadata." >&2
+            exit 1
+          fi
+          if [[ "$update_type" != "version-update:semver-patch" && "$update_type" != "version-update:semver-minor" ]]; then
+            echo "Leaving update type '$update_type' for human review."
+            exit 0
+          fi
+
+          pr_json="$(gh pr view "$pr_number" --json author,baseRefName,headRefOid,state)"
+          author="$(jq -r '.author.login' <<<"$pr_json")"
+          base="$(jq -r '.baseRefName' <<<"$pr_json")"
+          state="$(jq -r '.state' <<<"$pr_json")"
+          head_sha="$(jq -r '.headRefOid' <<<"$pr_json")"
+          if [[ "$author" != "dependabot[bot]" || "$base" != "master" || "$state" != "OPEN" || "$head_sha" != "$expected_sha" ]]; then
+            echo "PR identity, target, state, or head SHA changed; refusing to merge." >&2
+            exit 1
+          fi
+
+          for attempt in $(seq 1 60); do
+            check_status=0
+            checks="$(gh pr checks "$pr_number" --json name,bucket)" || check_status=$?
+            check_status="${check_status:-0}"
+            if [[ "$check_status" != "0" && "$check_status" != "8" ]]; then
+              echo "Unable to read PR checks (gh exit $check_status)." >&2
+              exit 1
+            fi
+
+            if [[ "$(jq 'length' <<<"$checks")" -gt 0 ]]; then
+              if [[ "$(jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length' <<<"$checks")" -gt 0 ]]; then
+                echo "At least one PR check failed or was cancelled; leaving the PR open." >&2
+                exit 1
+              fi
+              validate_passed="$(jq '[.[] | select(.name == "validate" and .bucket == "pass")] | length' <<<"$checks")"
+              pending="$(jq '[.[] | select(.bucket == "pending")] | length' <<<"$checks")"
+              if [[ "$validate_passed" -gt 0 && "$pending" -eq 0 ]]; then
+                current_sha="$(gh pr view "$pr_number" --json headRefOid --jq .headRefOid)"
+                if [[ "$current_sha" != "$expected_sha" ]]; then
+                  echo "PR head changed while checks were running; refusing to merge." >&2
+                  exit 1
+                fi
+                gh pr merge "$pr_number" --squash --match-head-commit "$expected_sha"
+                exit 0
+              fi
+            fi
+
+            echo "Waiting for validate and all other PR checks ($attempt/60)."
+            sleep 30
+          done
+
+          echo "Timed out waiting for successful PR checks." >&2
+          exit 1

@@ -136,6 +136,35 @@ def test_repo_foundations_requires_useful_indexes_and_test_index_drift_checks():
     assert "two-way drift check" in pipelines
 
 
+def test_repo_foundations_keeps_agent_instruction_files_short_and_grouped():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    instructions = " ".join(
+        (skill / "references" / "agent-instructions.md")
+        .read_text(encoding="utf-8")
+        .lower()
+        .split()
+    )
+    assert "at or below 300 lines" in instructions
+    assert "group guidance by a few stable categories" in instructions
+    assert "remove repeated rules and conflicting copies" in instructions
+    assert "deterministic checker for the line ceiling and local links" in instructions
+    assert "run it in ci and pre-push" in instructions
+
+
+def test_repo_foundations_requires_staged_parallelizable_roadmaps():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    body = " ".join((skill / "SKILL.md").read_text(encoding="utf-8").lower().split())
+    roadmap = " ".join(
+        (skill / "references" / "roadmaps.md").read_text(encoding="utf-8").lower().split()
+    )
+    assert "parallelizable tasks" in body
+    assert "split work into ordered stages" in roadmap
+    assert "mark tasks that can run in parallel" in roadmap
+    assert "owned boundary" in roadmap
+    assert "acceptance criteria" in roadmap
+    assert "do not infer completion from agent reports" in roadmap
+
+
 def test_repo_foundations_covers_environment_automation_and_issue_intake():
     skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
     operations = " ".join(
@@ -241,6 +270,52 @@ def test_current_repo_runs_pinned_gitleaks_in_ci_and_pre_push():
     assert "schedule:" in scheduled_text
     assert "gitleaks git" in hook_text
     assert "command -v gitleaks" in hook_text
+
+
+def test_current_repo_checks_agent_instruction_length_and_links_in_ci_and_pre_push():
+    root = Path(__file__).resolve().parents[1]
+    script_path = "plugins/general/skills/repo-foundations/scripts/check_agent_instructions.py"
+    checker = root / script_path
+    bash_validation = (root / "scripts" / "validate.sh").read_text(encoding="utf-8")
+    powershell_validation = (root / "scripts" / "validate.ps1").read_text(encoding="utf-8")
+    hook = (root / ".githooks" / "pre-push").read_text(encoding="utf-8")
+    workflow = (root / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+    assert checker.is_file()
+    assert "check_agent_instructions.py" in bash_validation
+    assert "check_agent_instructions.py" in powershell_validation
+    assert "check_agent_instructions.py" in hook
+    assert "bash scripts/validate.sh" in workflow
+    assert "scripts/validate.ps1" in workflow
+
+
+def test_current_repo_configures_weekly_dependabot_for_manifests_and_actions():
+    root = Path(__file__).resolve().parents[1]
+    config = (root / ".github" / "dependabot.yml").read_text(encoding="utf-8").lower()
+    readme = (root / "README.md").read_text(encoding="utf-8").lower()
+    assert "package-ecosystem: github-actions" in config
+    assert "package-ecosystem: pip" in config
+    assert config.count("interval: weekly") == 2
+    assert config.count("update-types:") == 2
+    assert "major updates remain separate for review" in readme
+
+
+def test_dependabot_auto_merge_uses_read_only_metadata_and_exact_head_gate():
+    root = Path(__file__).resolve().parents[1]
+    metadata = (root / ".github" / "workflows" / "dependabot-metadata.yml").read_text(encoding="utf-8").lower()
+    merge = (root / ".github" / "workflows" / "dependabot-automerge.yml").read_text(encoding="utf-8").lower()
+    validate = (root / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8").lower()
+    assert "pull_request_target:" in metadata
+    assert "contents: read" in metadata
+    assert "pull-requests: read" in metadata
+    assert "actions/checkout" not in metadata
+    assert re.search(r"dependabot/fetch-metadata@[0-9a-f]{40}", metadata)
+    assert "workflow_run:" in merge
+    assert "actions/download-artifact@" in merge
+    assert "version-update:semver-patch" in merge
+    assert "version-update:semver-minor" in merge
+    assert "gh pr checks" in merge
+    assert "--match-head-commit \"$expected_sha\"" in merge
+    assert "github.actor == 'dependabot[bot]'" in validate
 
 
 def test_release_please_auto_merge_requires_successful_validation_of_exact_head():

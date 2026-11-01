@@ -47,6 +47,9 @@ TEST_INDEX_CHECK = re.compile(
     r"check[_-]test[_-]?(?:index|inventory)|test[_-]?(?:index|inventory)[_-]?(?:check|sync|drift)",
     re.IGNORECASE,
 )
+AGENT_INSTRUCTION_NAMES = {"agents.md", "claude.md"}
+AGENT_INSTRUCTION_CHECK = re.compile(r"check_agent_instructions\.py", re.IGNORECASE)
+VALIDATOR_ENTRY_POINT = re.compile(r"^scripts/validate\.(?:sh|ps1)$", re.IGNORECASE)
 IGNORED_DIRS = {".git", ".venv", "venv", "node_modules", "build", "dist", "__pycache__"}
 
 
@@ -113,6 +116,18 @@ def non_executable_scripts(repo):
     return bad
 
 
+def check_is_wired(trigger_paths, check_pattern, relative):
+    trigger_texts = [path.read_text(encoding="utf-8", errors="ignore") for path in trigger_paths]
+    if any(check_pattern.search(text) for text in trigger_texts):
+        return True
+    for name, path in relative.items():
+        if not VALIDATOR_ENTRY_POINT.search(name) or not any(name in text for text in trigger_texts):
+            continue
+        if check_pattern.search(path.read_text(encoding="utf-8", errors="ignore")):
+            return True
+    return False
+
+
 def audit_repo(repo):
     repo = Path(repo).resolve()
     files = []
@@ -159,6 +174,12 @@ def audit_repo(repo):
         TEST_INDEX_CHECK.search(path.read_text(encoding="utf-8", errors="ignore"))
         for path in pre_push_hooks
     )
+    agent_instruction_files = [
+        path for name, path in relative.items()
+        if Path(name).name.lower() in AGENT_INSTRUCTION_NAMES
+    ]
+    ci_agent_instruction_check = check_is_wired(ci_files, AGENT_INSTRUCTION_CHECK, relative)
+    hook_agent_instruction_check = check_is_wired(pre_push_hooks, AGENT_INSTRUCTION_CHECK, relative)
     all_ci_and_hooks = [path for path in ci_files]
     all_ci_and_hooks.extend(path for name, path in relative.items()
                             if name.startswith((".githooks/", ".husky/")))
@@ -186,6 +207,11 @@ def audit_repo(repo):
         ("test index detected (heuristic)", has_test_index, False),
         ("test-index drift check in CI (heuristic)", ci_test_index_check, has_test_index),
         ("test-index drift check in pre-push hook (heuristic)", hook_test_index_check, has_test_index),
+        ("agent instruction files detected (heuristic)", bool(agent_instruction_files), False),
+        ("agent instruction validator in CI (heuristic)", ci_agent_instruction_check,
+         bool(agent_instruction_files)),
+        ("agent instruction validator in pre-push (heuristic)", hook_agent_instruction_check,
+         bool(agent_instruction_files)),
         ("developer/test guidance", dev_docs, True),
         ("source/test change guard", bool(sync_wired), True),
         ("local hook implementation present", hooks, False),

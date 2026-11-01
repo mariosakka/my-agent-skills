@@ -27,9 +27,12 @@ agents. Apply what fits the project.
 
 ## Registers And Audits As Code
 
-Keep an issue register with a format test, a stage-end audit script of greppable
-checks, a recurring-issues checklist, and a test-count drift check. Link each
-accepted limit to a reason and a recheck trigger.
+For projects with recurring issues, performance work, or measurable release
+limits, keep one canonical register and validate its required fields. Automate
+stable, high-value drift checks (such as test inventory or benchmark count
+regressions); do not add a ledger or audit script when existing tooling already
+provides the needed visibility. Link each accepted limit to its reason, owner,
+evidence, and recheck trigger.
 
 ## Reproducible Environments And Seed Data
 
