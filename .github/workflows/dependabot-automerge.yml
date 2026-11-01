@@ -4,7 +4,6 @@ on:
   workflow_run:
     workflows: [Dependabot metadata]
     types: [completed]
-    branches: [master]
 
 permissions:
   actions: read
@@ -54,7 +53,7 @@ jobs:
           base="$(jq -r '.baseRefName' <<<"$pr_json")"
           state="$(jq -r '.state' <<<"$pr_json")"
           head_sha="$(jq -r '.headRefOid' <<<"$pr_json")"
-          if [[ "$author" != "dependabot[bot]" || "$base" != "master" || "$state" != "OPEN" || "$head_sha" != "$expected_sha" ]]; then
+          if [[ "$author" != "dependabot[bot]" && "$author" != "app/dependabot" ]] || [[ "$base" != "master" || "$state" != "OPEN" || "$head_sha" != "$expected_sha" ]]; then
             echo "PR identity, target, state, or head SHA changed; refusing to merge." >&2
             exit 1
           fi

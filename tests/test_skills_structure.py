@@ -267,6 +267,8 @@ def test_current_repo_runs_pinned_gitleaks_in_ci_and_pre_push():
     assert "pull_request:" in workflow_text
     assert re.search(r"gitleaks/gitleaks-action@[0-9a-f]{40}", workflow_text)
     assert "gitleaks_version: 8.30.1" in workflow_text
+    assert "github_token: ${{ github.token }}" in workflow_text
+    assert "pull-requests: read" in workflow_text
     assert "schedule:" in scheduled_text
     assert "gitleaks git" in hook_text
     assert "command -v gitleaks" in hook_text
@@ -315,6 +317,7 @@ def test_dependabot_auto_merge_uses_read_only_metadata_and_exact_head_gate():
     assert "version-update:semver-minor" in merge
     assert "gh pr checks" in merge
     assert "--match-head-commit \"$expected_sha\"" in merge
+    assert '"$author" != "app/dependabot"' in merge
     assert "github.actor == 'dependabot[bot]'" in validate
 
 
