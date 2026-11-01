@@ -196,6 +196,6 @@ administrators must allow GitHub Actions to create pull requests for the
 workflow's `GITHUB_TOKEN`. The Release Please workflow dispatches full validation
 for its generated PR because `GITHUB_TOKEN`-created PR events may await approval;
 the `Auto-merge Release Please` workflow acts only on a successful validation run
-for the generated branch, verifies the bot author and exact current PR head SHA,
-then squash-merges that commit. A stale validation result cannot merge a newer
-PR head.
+for the generated branch (successful runs on other branches are ignored), verifies
+the bot author and exact current PR head SHA, then squash-merges that commit. A
+stale validation result cannot merge a newer PR head.

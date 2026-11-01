@@ -199,6 +199,7 @@ def test_release_please_auto_merge_requires_successful_validation_of_exact_head(
     assert "actions: write" in release
     assert "gh workflow run validate.yml --ref \"$branch\"" in release
     assert "conclusion == 'success'" in auto_merge
+    assert "validated_branch" in auto_merge
     assert "release-please--branches--master" in auto_merge
     assert "app/github-actions" in auto_merge
     assert '"$pr_sha" != "$validated_sha"' in auto_merge
