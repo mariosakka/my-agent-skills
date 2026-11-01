@@ -5,6 +5,7 @@ on:
     branches: [master]
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -17,5 +18,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+        id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dispatch validation for the open release PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          branch=release-please--branches--master
+          pr_json="$(gh pr list --state open --base master --head "$branch" \
+            --json number,headRefName,headRefOid,author --jq '.[0]')"
+          if [[ -z "$pr_json" || "$pr_json" == "null" ]]; then
+            echo "No open Release Please PR; nothing to validate."
+            exit 0
+          fi
+
+          author="$(jq -r '.author.login' <<<"$pr_json")"
+          if [[ "$author" != "app/github-actions" ]]; then
+            echo "Unexpected author for $branch: $author" >&2
+            exit 1
+          fi
+
+          gh workflow run validate.yml --ref "$branch"

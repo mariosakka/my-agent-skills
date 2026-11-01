@@ -1,0 +1,42 @@
+name: Auto-merge Release Please
+
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'workflow_dispatch' &&
+      github.event.workflow_run.head_branch == 'release-please--branches--master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm validated SHA and enable squash auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VALIDATED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          branch=release-please--branches--master
+          pr_json="$(gh pr list --state open --base master --head "$branch" \
+            --json number,headRefName,headRefOid,author --jq '.[0]')"
+          if [[ -z "$pr_json" || "$pr_json" == "null" ]]; then
+            echo "No open Release Please PR; nothing to merge."
+            exit 0
+          fi
+
+          author="$(jq -r '.author.login' <<<"$pr_json")"
+          pr_sha="$(jq -r '.headRefOid' <<<"$pr_json")"
+          pr_number="$(jq -r '.number' <<<"$pr_json")"
+          if [[ "$author" != "app/github-actions" || "$pr_sha" != "$VALIDATED_SHA" ]]; then
+            echo "Release PR identity/head changed after validation; refusing auto-merge." >&2
+            exit 1
+          fi
+
+          gh pr merge "$pr_number" --auto --squash --match-head-commit "$VALIDATED_SHA"

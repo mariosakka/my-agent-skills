@@ -176,16 +176,34 @@ def test_repo_foundations_requires_secret_scanning_in_ci_and_pre_push():
 
 
 def test_current_repo_runs_pinned_gitleaks_in_ci_and_pre_push():
-    workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "secret-scan.yml")
+    workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "validate.yml")
+    scheduled_workflow = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "secret-scan.yml")
     hook = (Path(__file__).resolve().parents[1] / ".githooks" / "pre-push")
     workflow_text = workflow.read_text(encoding="utf-8").lower()
+    scheduled_text = scheduled_workflow.read_text(encoding="utf-8").lower()
     hook_text = hook.read_text(encoding="utf-8").lower()
     assert "pull_request:" in workflow_text
-    assert "schedule:" in workflow_text
     assert re.search(r"gitleaks/gitleaks-action@[0-9a-f]{40}", workflow_text)
     assert "gitleaks_version: 8.30.1" in workflow_text
+    assert "schedule:" in scheduled_text
     assert "gitleaks git" in hook_text
     assert "command -v gitleaks" in hook_text
+
+
+def test_release_please_auto_merge_requires_successful_validation_of_exact_head():
+    root = Path(__file__).resolve().parents[1]
+    release = (root / ".github" / "workflows" / "release-please.yml").read_text(encoding="utf-8").lower()
+    auto_merge = (root / ".github" / "workflows" / "auto-merge-release-please.yml").read_text(
+        encoding="utf-8"
+    ).lower()
+    assert "actions: write" in release
+    assert "gh workflow run validate.yml --ref \"$branch\"" in release
+    assert "workflow_dispatch" in auto_merge
+    assert "conclusion == 'success'" in auto_merge
+    assert "release-please--branches--master" in auto_merge
+    assert "app/github-actions" in auto_merge
+    assert '"$pr_sha" != "$validated_sha"' in auto_merge
+    assert "--match-head-commit \"$validated_sha\"" in auto_merge
 
 
 def test_repo_foundations_requires_api_contract_generation_and_publication_rules():

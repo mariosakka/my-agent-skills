@@ -94,6 +94,12 @@ cancelled check as "leave open", not "retry blindly".
   commits, or every dependency PR fails for a reason a bot cannot fix.
 - Check the automation against real PRs before claiming it works; a workflow
   that was never triggered is untested.
+- Release Please PRs may be created by `GITHUB_TOKEN`, whose PR-triggered
+  workflows can require approval. Explicitly dispatch the normal full CI for the
+  exact release branch, then enable auto-merge only after success and only if
+  the PR head SHA still matches the validated SHA. Restrict the merge workflow
+  to the expected bot and release branch; never use admin bypass or merge on an
+  unverified release PR.
 
 ## Build And Deployment Pipelines
 

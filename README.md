@@ -193,4 +193,7 @@ PR creates the plugin's versioned GitHub Release. Current package versions in
 `.release-please-manifest.json` are the baseline; after the history consolidation,
 new Conventional Commits determine future version bumps. Repository
 administrators must allow GitHub Actions to create pull requests for the
-workflow's `GITHUB_TOKEN`.
+workflow's `GITHUB_TOKEN`. The Release Please workflow dispatches full validation
+for its generated PR because `GITHUB_TOKEN`-created PR events may await approval;
+the `Auto-merge Release Please` workflow enables squash auto-merge only after
+validation succeeds for the exact current PR head SHA.
