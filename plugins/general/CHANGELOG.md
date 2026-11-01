@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.7.0...general-v0.8.0) (2026-11-01)
+
+
+### Features
+
+* **repo-foundations:** add Dependabot automation and guidance ([a9765b9](https://github.com/mariosakka/my-agent-skills/commit/a9765b9e2b5897338fd21653c251c7e7a13c7a30))
+
 ## [0.7.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.6.0...general-v0.7.0) (2026-11-01)
 
 
