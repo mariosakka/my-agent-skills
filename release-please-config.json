@@ -1,18 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
-    "plugins/colete-online": {
-      "release-type": "simple",
-      "package-name": "colete-online",
-      "component": "colete-online",
-      "version-file": "VERSION",
-      "include-component-in-tag": true,
-      "extra-files": [
-        { "type": "json", "path": ".claude-plugin/plugin.json", "jsonpath": "$.version" },
-        { "type": "json", "path": ".codex-plugin/plugin.json", "jsonpath": "$.version" },
-        { "type": "json", "path": ".muse-plugin/plugin.json", "jsonpath": "$.version" }
-      ]
-    },
     "plugins/general": {
       "release-type": "simple",
       "package-name": "general",

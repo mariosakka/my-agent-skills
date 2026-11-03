@@ -164,15 +164,6 @@ gh pr edit NUMBER --repo OWNER/REPO --remove-label "label-name"
 | Check CI | `gh pr checks N --repo R` |
 | Approve | `gh pr review N --repo R --approve` |
 
-## Colete Online repos
-
-| Short name | Full repo |
-|---|---|
-| platform | `Colete-Online/platform` |
-| woocommerce-plugin | `Colete-Online/woocommerce-plugin` |
-| prestashop-module | `Colete-Online/prestashop-module` |
-| ai-tooling | `Colete-Online/ai-tooling` |
-
 ## Reading existing desk pages
 
 There is **no `get_page` tool** in the MCP server. The only page tools are `list_pages`, `create_page`, `update_page`, and `delete_page`.

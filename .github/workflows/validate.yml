@@ -93,10 +93,8 @@ jobs:
         run: |
           export HOME="$(mktemp -d)"
           claude plugin marketplace add "$GITHUB_WORKSPACE"
-          claude plugin install colete-online@mario-agent-skills
           claude plugin install general@mario-agent-skills
           claude plugin list | tee "$HOME/list.txt"
-          grep -q colete-online "$HOME/list.txt"
           grep -q general "$HOME/list.txt"
 
       - name: Muse plugin validate (best effort)
