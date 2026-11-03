@@ -2,7 +2,7 @@
 
 Personal AI agent skill library, packaged as a plugin marketplace for Claude Code and kept compatible with GitHub Copilot CLI, Codex, Muse Code, and Gemini CLI.
 
-Skills live in two plugins. Each skill is a self-contained folder with a `SKILL.md` file that tells the agent what to do and how.
+Skills live in one plugin (`general`). Each skill is a self-contained folder with a `SKILL.md` file that tells the agent what to do and how.
 
 The repo is private, so every install path needs git credentials for `mariosakka/my-agent-skills`.
 
@@ -14,7 +14,6 @@ The repo is private, so every install path needs git credentials for `mariosakka
 
 ```
 /plugin marketplace add mariosakka/my-agent-skills
-/plugin install colete-online@mario-agent-skills
 /plugin install general@mario-agent-skills
 ```
 
@@ -49,13 +48,6 @@ Muse plugins are behind `MUSE_EXPERIMENTAL_PLUGINS=1`. The `.muse-plugin/marketp
 ```bash
 REPO=https://github.com/mariosakka/my-agent-skills.git
 
-# colete-online
-gemini skills install $REPO --path plugins/colete-online/skills/colete-flow --consent
-gemini skills install $REPO --path plugins/colete-online/skills/eod-weekly-log --consent
-gemini skills install $REPO --path plugins/colete-online/skills/issue-audit --consent
-gemini skills install $REPO --path plugins/colete-online/skills/pr-audit --consent
-gemini skills install $REPO --path plugins/colete-online/skills/slack-work-communication --consent
-
 # general
 gemini skills install $REPO --path plugins/general/skills/explanation-notebooks --consent
 gemini skills install $REPO --path plugins/general/skills/explain-syntax --consent
@@ -76,16 +68,6 @@ Notes:
 
 ## Plugins and skills
 
-### `colete-online`
-
-| Skill | Description |
-|-------|-------------|
-| [`colete-flow`](plugins/colete-online/skills/colete-flow/SKILL.md) | Standing workflow for real tasks on Colete Online repos: issue lifecycle, alignment gate, PR review loop, Slack status |
-| [`eod-weekly-log`](plugins/colete-online/skills/eod-weekly-log/SKILL.md) | Adds items to the EOD and weekly work logs via scripts and formats them for Slack |
-| [`issue-audit`](plugins/colete-online/skills/issue-audit/SKILL.md) | Fetches approved+unassigned issues (script) and validates each for staleness/overlap (agent) |
-| [`pr-audit`](plugins/colete-online/skills/pr-audit/SKILL.md) | Fetches Mario's in-flight PRs (assigned/backing-issue) and PRs he owes a review on, with draft/review-history status |
-| [`slack-work-communication`](plugins/colete-online/skills/slack-work-communication/SKILL.md) | Sends structured Slack status messages for work events |
-
 ### `general`
 
 | Skill | Description |
@@ -97,6 +79,8 @@ Notes:
 | [`report-to-pdf`](plugins/general/skills/report-to-pdf/SKILL.md) | Renders a Markdown report into a consistently styled PDF (title page, TOC, syntax-highlighted code, tables) |
 | [`repo-foundations`](plugins/general/skills/repo-foundations/SKILL.md) | Establishes project-specific structure, testing, CI, release, privacy, and workspace standards |
 | [`lab-creation`](plugins/general/skills/lab-creation/SKILL.md) | Creates or completes educational labs from assignments and existing course conventions |
+
+The colete-online skills moved to the separate repo `mariosakka/colete-online-skills`.
 
 The old `homepage` skill is gone; the Desk VS Code extension (`mariosakka/vscode-desk`) replaces it.
 
@@ -116,7 +100,7 @@ The old `homepage` skill is gone; the Desk VS Code extension (`mariosakka/vscode
 
 ## Add a new skill
 
-1. Pick a plugin (`plugins/colete-online` or `plugins/general`) and create `plugins/<group>/skills/<name>/`
+1. Create `plugins/<group>/skills/<name>/`
 2. Add a `SKILL.md` inside it with frontmatter `name` (equal to the folder name) and a non-empty `description`
 3. Commit and push
 4. Update: marketplace tools pick it up on marketplace update. For Gemini, add a `gemini skills install` line to the Gemini section above.
@@ -138,7 +122,7 @@ Every skill has pytest tests next to it (`plugins/<plugin>/skills/<skill>/tests/
 
 ```
 pip install -r requirements-dev.txt
-bash scripts/run_tests.sh            # all tests; extra args go to pytest, e.g. -k pr_audit
+bash scripts/run_tests.sh            # all tests; extra args go to pytest, e.g. -k manifests
 ```
 
 The shell-script tests need `bash` and `jq` (they skip when missing); the PDF tests need `fpdf2`, `Pillow` and `Pygments` (they skip when missing). The agent-instruction checker tests the 300-line ceiling and inline local Markdown links for `AGENTS.md`/`CLAUDE.md`.
@@ -190,8 +174,8 @@ locally. CI runs both checks on pushes and pull requests; the hook is local
 feedback, not a substitute for CI. Test deletions without a related source
 change are blocked so feature coverage is not removed by itself.
 
-`.github/workflows/release-please.yml` manages separate releases for the
-`general` and `colete-online` plugins. Use Conventional Commits for plugin
+`.github/workflows/release-please.yml` manages releases for the
+`general` plugin. Use Conventional Commits for plugin
 changes (`feat(scope):` for new behavior, `fix(scope):` for corrections,
 `perf(scope):` for meaningful performance changes); scopes should identify the
 plugin or skill. Release Please opens a version/changelog PR, and merging that

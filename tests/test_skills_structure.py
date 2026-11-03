@@ -77,7 +77,7 @@ def test_scripts_have_valid_syntax_and_lf_endings(skill, tmp_path):
 
 
 def test_every_skill_found():
-    assert len(SKILLS) >= 9
+    assert len(SKILLS) >= 7
 
 
 def test_lab_creation_skill_requires_lab_update_hook_with_bypass():
