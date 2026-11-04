@@ -60,6 +60,10 @@ jobs:
             echo "No previous commit to compare; skipping change-sync check on initial push."
             exit 0
           fi
+          if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "Previous commit not in history (force-push or rebase); skipping change-sync check."
+            exit 0
+          fi
           export DOC_SYNC_BYPASS_REASON="$(git log --format=%B "$BASE_SHA..$GITHUB_SHA")"
           export TEST_SYNC_BYPASS_REASON="$DOC_SYNC_BYPASS_REASON"
           python scripts/check_docs_sync.py "$BASE_SHA" "$GITHUB_SHA"
