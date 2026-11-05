@@ -359,6 +359,31 @@ def test_wide_and_tall_images_scale_to_fit_the_page(make):
     assert small["bbox"][2] - small["bbox"][0] <= 130 * mm + 1        # a bare raster image keeps the 130 mm cap
 
 
+def test_figure_that_almost_fits_shrinks_instead_of_leaving_a_gap(make):
+    from PIL import Image
+    import io
+    b = io.BytesIO()
+    Image.new("RGB", (1200, 1000), (30, 30, 200)).save(b, "PNG")
+    mm = 72 / 25.4
+    for n in range(14, 30):
+        body = "\n\n".join(f"Filler paragraph number {i}." for i in range(n))
+        r, out = make(f"# T\n\n# Chapter\n\n{body}\n\n![fig](fig.png)\n\n*Figure: caption*\n",
+                      files={"fig.png": b.getvalue()})
+        assert r.returncode == 0, r.stdout + r.stderr
+        doc = _mupdf().open(str(out))
+        for page in doc:
+            infos = page.get_image_info()
+            if not infos or page.number == 0:
+                continue
+            text_below_top = [bl for bl in page.get_text("blocks") if "Filler" in bl[4]]
+            y_img = infos[0]["bbox"][1]
+            if not text_below_top:                      # image alone at the top of a page
+                prev = doc[page.number - 1]
+                last = max((bl[3] for bl in prev.get_text("blocks") if "Filler" in bl[4]), default=0)
+                room = (297 * mm - 22 * mm) - last       # space left on the previous page
+                assert room < 84 * mm + 12 * mm, f"n={n}: {room / mm:.0f} mm left unused before the figure"
+
+
 # ---------------------------------------------------------------- regression: the old behaviour with the new features present
 def test_title_page_toc_tables_and_code_still_render_next_to_new_features(make):
     pypdf = pytest.importorskip("pypdf")

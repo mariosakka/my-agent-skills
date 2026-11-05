@@ -1476,7 +1476,12 @@ def make_pdf_class(accent, dark=False):
                 cap_h = len(self.multi_cell(CONTENT_W, 4.2, caption, markdown=True,
                                             dry_run=True, output="LINES", align="C")) * 4.2 + 2
             if self.get_y() + dh + cap_h + 6 > self.h - self.b_margin:
-                self.add_page()
+                # Shrink to the space left (down to 70 %) rather than leave a gap; else new page.
+                room = self.h - self.b_margin - self.get_y() - cap_h - 6
+                if room >= max(0.7 * dh, 50):
+                    dw, dh = dw * room / dh, room
+                else:
+                    self.add_page()
             x = MARGIN + (CONTENT_W - dw) / 2
             y = self.get_y() + 1
             try:
