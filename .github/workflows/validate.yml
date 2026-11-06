@@ -64,6 +64,10 @@ jobs:
             echo "Previous commit not in history (force-push or rebase); skipping change-sync check."
             exit 0
           fi
+          if [ -z "$(git log --format=%an "$BASE_SHA..$GITHUB_SHA" | grep -v -x 'dependabot\[bot\]')" ]; then
+            echo "Only Dependabot commits; skipping change-sync check (PR run already validated them)."
+            exit 0
+          fi
           export DOC_SYNC_BYPASS_REASON="$(git log --format=%B "$BASE_SHA..$GITHUB_SHA")"
           export TEST_SYNC_BYPASS_REASON="$DOC_SYNC_BYPASS_REASON"
           python scripts/check_docs_sync.py "$BASE_SHA" "$GITHUB_SHA"
