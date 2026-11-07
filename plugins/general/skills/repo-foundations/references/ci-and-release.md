@@ -135,6 +135,13 @@ cancelled check as "leave open", not "retry blindly".
   when the base branch moves or the PR is closed and reopened, so a re-run or a
   reopen fails with `bad object` while the checkout holds a newer merge commit.
   Reopening a PR cannot repair this: it creates yet another merge commit.
+- A release PR merged with `GITHUB_TOKEN` does not fire the release workflow's
+  `push` trigger, so the tag and GitHub release are silently never created.
+  Give the release workflow a `workflow_dispatch` trigger (dispatch is exempt
+  from that rule) and have the merge job run `gh workflow run <release>.yml
+  --ref <default-branch>` right after merging (`actions: write` at job level).
+  Verify with `gh release list` after the first real release; a version bump on
+  the default branch without a tag is the symptom.
 
 ## Build And Deployment Pipelines
 

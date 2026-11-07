@@ -353,6 +353,13 @@ def test_pull_request_docs_sync_uses_checked_out_head_not_event_merge_sha():
     assert "GITHUB_SHA" not in step
 
 
+def test_repo_foundations_documents_release_pr_bot_pitfalls():
+    skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
+    text = (skill / "references" / "ci-and-release.md").read_text(encoding="utf-8")
+    for needle in ("git rev-parse HEAD", "commit status", "workflow_dispatch", "does not fire the release workflow"):
+        assert needle in " ".join(text.split()), needle
+
+
 def test_repo_foundations_requires_api_contract_generation_and_publication_rules():
     skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
     pipelines = " ".join(
