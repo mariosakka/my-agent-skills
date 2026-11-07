@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.9.0...general-v0.10.0) (2026-11-07)
+
+
+### Features
+
+* **repo-foundations:** document bot-merged release PRs not firing the release workflow ([#26](https://github.com/mariosakka/my-agent-skills/issues/26)) ([0161f94](https://github.com/mariosakka/my-agent-skills/commit/0161f943eef8643029b904371818d1884938299b))
+
 ## [0.9.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.8.0...general-v0.9.0) (2026-11-07)
 
 
