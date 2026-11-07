@@ -138,6 +138,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      statuses: write
     steps:
       - name: Verify Release Please PR and squash-merge validated SHA
         env:
@@ -160,5 +161,13 @@ jobs:
             echo "Release PR identity/head changed after validation; refusing auto-merge." >&2
             exit 1
           fi
+
+          # The ruleset requires a `validate` check on the PR head. The dispatched run
+          # reports on master, and bot pushes do not trigger the pull_request run, so
+          # report the already-passed validation of this exact SHA as a commit status.
+          gh api "repos/$GH_REPO/statuses/$VALIDATED_SHA" \
+            -f state=success -f context=validate \
+            -f description="Validated by dispatched validate run" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
           gh pr merge "$pr_number" --squash --match-head-commit "$VALIDATED_SHA"
