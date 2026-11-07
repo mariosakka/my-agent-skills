@@ -125,6 +125,16 @@ cancelled check as "leave open", not "retry blindly".
   the PR head SHA still matches the validated SHA. Restrict the merge workflow
   to the expected bot and release branch; never use admin bypass or merge on an
   unverified release PR.
+- A branch ruleset that requires a named check on the PR head is not satisfied
+  by a run dispatched on the default branch, and bot pushes do not trigger the
+  `pull_request` run. After the exact-SHA validation passes, have the merge job
+  post a commit status with the required context on that same SHA (grant
+  `statuses: write` at job level) before merging, and test that order.
+- In `pull_request` jobs diff against the commit that was actually checked out
+  (`git rev-parse HEAD`), not `$GITHUB_SHA`. The event's merge commit goes stale
+  when the base branch moves or the PR is closed and reopened, so a re-run or a
+  reopen fails with `bad object` while the checkout holds a newer merge commit.
+  Reopening a PR cannot repair this: it creates yet another merge commit.
 
 ## Build And Deployment Pipelines
 
