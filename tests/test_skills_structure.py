@@ -337,6 +337,9 @@ def test_release_please_auto_merge_requires_successful_validation_of_exact_head(
     assert '"$pr_sha" != "$validated_sha"' in validate
     assert "--match-head-commit \"$validated_sha\"" in validate
     assert "statuses: write" in validate
+    assert "workflow_dispatch:" in release
+    assert "actions: write" in validate
+    assert validate.index("gh workflow run release-please.yml --ref master") > validate.index("gh pr merge")
     status_post = validate.index('statuses/$validated_sha')
     assert "context=validate" in validate[status_post:status_post + 200]
     assert status_post < validate.index("gh pr merge", status_post)
