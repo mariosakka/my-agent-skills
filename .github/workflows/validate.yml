@@ -49,7 +49,8 @@ jobs:
         env:
           DOC_SYNC_BYPASS_REASON: "${{ github.actor == 'dependabot[bot]' && 'Docs-Not-Required: Dependency version update; full validation still runs.' || github.event.pull_request.body }}"
           TEST_SYNC_BYPASS_REASON: "${{ github.actor == 'dependabot[bot]' && 'Tests-Not-Required: Dependency version update; full validation still runs.' || github.event.pull_request.body }}"
-        run: python scripts/check_docs_sync.py "${{ github.event.pull_request.base.sha }}" "$GITHUB_SHA"
+        # HEAD, not GITHUB_SHA: the event's merge commit goes stale when the base moves or the PR is reopened.
+        run: python scripts/check_docs_sync.py "${{ github.event.pull_request.base.sha }}" "$(git rev-parse HEAD)"
 
       - name: Check documentation and source/test changes on push
         if: github.event_name == 'push'

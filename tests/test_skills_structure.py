@@ -342,6 +342,14 @@ def test_release_please_auto_merge_requires_successful_validation_of_exact_head(
     assert status_post < validate.index("gh pr merge", status_post)
 
 
+def test_pull_request_docs_sync_uses_checked_out_head_not_event_merge_sha():
+    root = Path(__file__).resolve().parents[1]
+    validate = (root / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+    step = next(line for line in validate.splitlines() if "check_docs_sync.py" in line and "pull_request.base.sha" in line)
+    assert '"$(git rev-parse HEAD)"' in step
+    assert "GITHUB_SHA" not in step
+
+
 def test_repo_foundations_requires_api_contract_generation_and_publication_rules():
     skill = next(skill for skill in SKILLS if skill.name == "repo-foundations")
     pipelines = " ".join(
