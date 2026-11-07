@@ -221,6 +221,27 @@ class FoundationsAuditTests(unittest.TestCase):
         self.assertEqual(checks["agent instruction validator in CI (heuristic)"], "WARN")
         self.assertEqual(checks["agent instruction validator in pre-push (heuristic)"], "WARN")
 
+    def test_root_agents_and_claude_files_must_both_exist(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "CLAUDE.md").write_text("short rules", encoding="utf-8")
+            only_claude = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+            (repo / "AGENTS.md").write_text("short rules", encoding="utf-8")
+            both = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(only_claude["root AGENTS.md and CLAUDE.md both present"], "WARN")
+        self.assertEqual(both["root AGENTS.md and CLAUDE.md both present"], "PASS")
+
+    def test_nested_instruction_files_do_not_satisfy_the_root_requirement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "docs").mkdir()
+            (repo / "docs" / "AGENTS.md").write_text("x", encoding="utf-8")
+            (repo / "docs" / "CLAUDE.md").write_text("x", encoding="utf-8")
+            checks = {name: status for name, status, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(checks["root AGENTS.md and CLAUDE.md both present"], "WARN")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,21 @@
 # Agent Instruction Files
 
-Treat `AGENTS.md` and `CLAUDE.md` as concise entrypoints, not full engineering
-manuals. Keep each file at or below 300 lines; aim well below the ceiling.
+Every repository has **both** a root `AGENTS.md` and a root `CLAUDE.md`. Codex,
+Copilot CLI, Gemini CLI and similar tools read `AGENTS.md`; Claude Code reads
+`CLAUDE.md`. A repo with only one of them silently gives the other tools no
+instructions.
+
+- `AGENTS.md` is the canonical, tool-neutral entrypoint. It must stand alone:
+  no tool is guaranteed to read `CLAUDE.md`.
+- `CLAUDE.md` holds only Claude-specific differences plus a pointer to
+  `AGENTS.md`. Claude Code supports `@path` imports, so `CLAUDE.md` may begin
+  with `@AGENTS.md` instead of copying rules; do not assume other tools support
+  imports, and never make `AGENTS.md` depend on one.
+- Create the missing file whenever you create or change either one. Keep the
+  two consistent: a rule lives in one place, not in both.
+
+Treat both files as concise entrypoints, not full engineering manuals. Keep each
+file at or below 300 lines; aim well below the ceiling.
 
 - Group guidance by a few stable categories, such as workflow, quality gates,
   architecture, and safety. Put mandatory, recommended, and conditional rules
