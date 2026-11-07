@@ -140,6 +140,7 @@ jobs:
       contents: write
       pull-requests: write
       statuses: write
+      actions: write
     steps:
       - name: Verify Release Please PR and squash-merge validated SHA
         env:
@@ -172,3 +173,7 @@ jobs:
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
           gh pr merge "$pr_number" --squash --match-head-commit "$VALIDATED_SHA"
+
+          # Merges made with GITHUB_TOKEN do not fire the push trigger, so Release Please
+          # would never tag the release. workflow_dispatch is exempt from that rule.
+          gh workflow run release-please.yml --ref master
