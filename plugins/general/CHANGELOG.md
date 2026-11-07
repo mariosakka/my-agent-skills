@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.8.0...general-v0.9.0) (2026-11-07)
+
+
+### Features
+
+* **repo-foundations:** never commit agent folders; require full .gitignore ([#22](https://github.com/mariosakka/my-agent-skills/issues/22)) ([15721e5](https://github.com/mariosakka/my-agent-skills/commit/15721e57e73654fbe15014608cb96e6c21d59578))
+* **repo-foundations:** require both AGENTS.md and CLAUDE.md ([#19](https://github.com/mariosakka/my-agent-skills/issues/19)) ([a77d574](https://github.com/mariosakka/my-agent-skills/commit/a77d5744cb24d2f741e70280a79f399968c124bb))
+
+
+### Bug Fixes
+
+* **ci:** diff the checked-out HEAD in pull_request docs sync ([#24](https://github.com/mariosakka/my-agent-skills/issues/24)) ([898ce68](https://github.com/mariosakka/my-agent-skills/commit/898ce68231f7a6a99ff800a73067b09597db6a4f))
+
 ## [0.8.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.7.0...general-v0.8.0) (2026-11-01)
 
 
