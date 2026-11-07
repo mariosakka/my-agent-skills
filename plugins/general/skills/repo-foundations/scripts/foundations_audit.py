@@ -116,6 +116,31 @@ def non_executable_scripts(repo):
     return bad
 
 
+AGENT_WORKSPACE_PREFIXES = (
+    ".superpowers/", "docs/superpowers/", ".claude/", ".codex/", ".gemini/",
+    ".cursor/", ".windsurf/",
+)
+
+
+def tracked_agent_workspace_files(repo):
+    """Tracked files inside agent/tool working folders (never commit these)."""
+    try:
+        out = subprocess.run(["git", "-C", str(repo), "ls-files"], capture_output=True,
+                             text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [name for name in out.splitlines() if name.startswith(AGENT_WORKSPACE_PREFIXES)]
+
+
+def ignores_agent_workspaces(repo):
+    """True when .gitignore names the superpowers folders and .claude/."""
+    path = Path(repo) / ".gitignore"
+    if not path.is_file():
+        return False
+    lines = {line.strip().lstrip("/") for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()}
+    return {".superpowers/", ".claude/"} <= lines and "docs/superpowers/" in lines
+
+
 def check_is_wired(trigger_paths, check_pattern, relative):
     trigger_texts = [path.read_text(encoding="utf-8", errors="ignore") for path in trigger_paths]
     if any(check_pattern.search(text) for text in trigger_texts):
@@ -198,6 +223,8 @@ def audit_repo(repo):
     checks = [
         ("README", any(Path(name).name.lower() == "readme.md" for name in relative), True),
         ("ignore rules", ".gitignore" in relative, True),
+        ("agent/tool folders ignored in .gitignore", ignores_agent_workspaces(repo), True),
+        ("no agent/tool folders tracked", not tracked_agent_workspace_files(repo), True),
         ("CI workflow", bool(ci_files), True),
         ("test files", bool(tests), True),
         ("CI runs tests (heuristic)", bool(ci_files) and ci_mentions_tests, True),

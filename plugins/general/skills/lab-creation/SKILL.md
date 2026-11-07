@@ -97,6 +97,12 @@ tools or a general framework for a one-off lab.
   not remove tracked files or secrets already in history; inspect Git's staged
   changes and history as appropriate, and never delete or untrack user data
   without authorization.
+- Create the `.gitignore` when the repository is created, and always include
+  agent and tool working folders such as `.superpowers/`, `docs/superpowers/`,
+  `.claude/`, `.codex/`, `.gemini/` and `.cursor/`. These hold plans, scratch
+  output and local settings; never commit them, and keep anything worth
+  submitting in the lab's normal files. Commit `AGENTS.md` and `CLAUDE.md`
+  only if the repository's own conventions call for them.
 
 ## Verify And Hand Off
 
@@ -109,4 +115,6 @@ temporary output unless changing stored outputs is explicitly intended.
 Report the commands run, results, assumptions, unmet requirements, and anything
 not executed. Keep generated artifacts only when requested or required by the
 repository. Do not publish or commit personal data, private assignment material,
-or outputs without confirming they are appropriate for that repository.
+or outputs without confirming they are appropriate for that repository. Before
+committing, check `git status` for agent folders (`.superpowers/`, `.claude/`
+and similar) and leave them out.

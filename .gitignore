@@ -6,4 +6,12 @@
 .vscode/
 __pycache__/
 .pytest_cache/
-docs/superpowers/specs/
+
+# Agent and tool working folders: never commit
+.superpowers/
+docs/superpowers/
+.claude/
+.codex/
+.gemini/
+.cursor/
+.windsurf/
