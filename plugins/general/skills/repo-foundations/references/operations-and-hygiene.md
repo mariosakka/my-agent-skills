@@ -22,6 +22,15 @@ agents. Apply what fits the project.
   in one dedicated commit.
 - **Staging.** `git add -A` after tooling runs picks up generated files and large
   traces. Add an ignore rule when adding the tool that writes a new output folder.
+- **Agent and tool workspaces.** Folders written by agents and assistants
+  (`.superpowers/`, `docs/superpowers/`, `.claude/`, `.codex/`, `.gemini/`,
+  `.cursor/`, `.windsurf/`) are never committed: they hold plans, scratch
+  output, local settings and transcripts that are machine- and person-specific.
+  Add them to `.gitignore` in the repository's first commit alongside the
+  language-specific rules, and move anything worth keeping into normal docs
+  (for example `docs/design/`). Plugin repositories may track their own
+  manifests (`.claude-plugin/`, `.codex-plugin/`); that is product, not state.
+  The audit warns when these paths are untracked-but-not-ignored or tracked.
 - **Scheduled live checks.** Alert when they stop producing evidence, not only
   when they fail.
 

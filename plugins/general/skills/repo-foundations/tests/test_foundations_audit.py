@@ -242,6 +242,33 @@ class FoundationsAuditTests(unittest.TestCase):
 
         self.assertEqual(checks["root AGENTS.md and CLAUDE.md both present"], "WARN")
 
+    def test_gitignore_must_name_agent_workspace_folders(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+            missing = {n: s for n, s, _ in AUDIT.audit_repo(repo)}
+            (repo / ".gitignore").write_text(
+                "node_modules/\n.superpowers/\ndocs/superpowers/\n.claude/\n", encoding="utf-8")
+            present = {n: s for n, s, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(missing["agent/tool folders ignored in .gitignore"], "WARN")
+        self.assertEqual(present["agent/tool folders ignored in .gitignore"], "PASS")
+
+    def test_tracked_agent_workspace_files_are_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+            (repo / "docs" / "superpowers").mkdir(parents=True)
+            (repo / "docs" / "superpowers" / "plan.md").write_text("x", encoding="utf-8")
+            (repo / ".claude-plugin").mkdir()
+            (repo / ".claude-plugin" / "plugin.json").write_text("{}", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+            tracked = AUDIT.tracked_agent_workspace_files(repo)
+            checks = {n: s for n, s, _ in AUDIT.audit_repo(repo)}
+
+        self.assertEqual(tracked, ["docs/superpowers/plan.md"])
+        self.assertEqual(checks["no agent/tool folders tracked"], "WARN")
+
 
 if __name__ == "__main__":
     unittest.main()

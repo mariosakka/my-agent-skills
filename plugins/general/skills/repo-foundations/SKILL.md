@@ -59,6 +59,17 @@ equivalent in CI and the installed pre-push hook. Keep exceptions narrow,
 owned, and time-bounded. If a credential is exposed, revoke/rotate it; removing
 the text alone is insufficient.
 
+Never commit agent or tool working state: `.superpowers/`, `docs/superpowers/`,
+`.claude/`, `.codex/`, `.gemini/`, `.cursor/`, `.windsurf/` and similar folders
+(plans, specs, scratch notes, brainstorm output, local settings, transcripts).
+Create a proper `.gitignore` when the repository is created, covering the
+language and tools in use plus these agent folders; keep durable decisions in
+ordinary project docs instead. A repository whose product is an agent plugin may
+track its own manifests (for example `.claude-plugin/`); `AGENTS.md` and
+`CLAUDE.md` are files, not workspaces, and stay committed. Ignore rules do not
+untrack files already committed: run `git ls-files` for these paths and remove
+them from the index (`git rm -r --cached`) only with authorization.
+
 Use `python <skill-dir>/scripts/repo_check.py <repo>` for a read-only status,
 worktree, and staged-filename inventory; it does not inspect content or certify
 publication safety. Remove only task-created temporary files. Before removing a
