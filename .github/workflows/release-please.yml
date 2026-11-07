@@ -27,7 +27,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          branch=release-please--branches--master
+          branch=release-please--branches--master--components--general
           pr_json="$(gh pr list --state open --base master --head "$branch" \
             --json number,headRefName,headRefOid,author --jq '.[0]')"
           if [[ -z "$pr_json" || "$pr_json" == "null" ]]; then

@@ -330,7 +330,7 @@ def test_release_please_auto_merge_requires_successful_validation_of_exact_head(
     assert "auto-merge-release-please:" in validate
     assert "needs: validate" in validate
     assert "github.event_name == 'workflow_dispatch'" in validate
-    assert "inputs.target_ref == 'release-please--branches--master'" in validate
+    assert "inputs.target_ref == 'release-please--branches--master--components--general'" in validate
     assert "validated_sha: ${{ steps.validated-revision.outputs.sha }}" in validate
     assert "needs.validate.outputs.validated_sha" in validate
     assert "app/github-actions" in validate

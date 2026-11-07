@@ -133,7 +133,7 @@ jobs:
     if: >-
       success() &&
       github.event_name == 'workflow_dispatch' &&
-      inputs.target_ref == 'release-please--branches--master'
+      inputs.target_ref == 'release-please--branches--master--components--general'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -145,7 +145,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           VALIDATED_SHA: ${{ needs.validate.outputs.validated_sha }}
         run: |
-          branch=release-please--branches--master
+          branch=release-please--branches--master--components--general
           pr_json="$(gh pr list --state open --base master --head "$branch" \
             --json number,headRefName,headRefOid,author --jq '.[0]')"
           if [[ -z "$pr_json" || "$pr_json" == "null" ]]; then
