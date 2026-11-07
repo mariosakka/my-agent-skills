@@ -18,7 +18,7 @@ first; preserve existing work and avoid speculative infrastructure.
    find. Read [architecture and quality](references/architecture-and-quality.md)
    and [indexes and inventories](references/indexes-and-inventories.md). Read
    [agent instructions](references/agent-instructions.md) when creating or
-   changing `AGENTS.md` or `CLAUDE.md`.
+   changing `AGENTS.md` or `CLAUDE.md`. Every repo gets both files.
 2. **Confidence and enforcement.** Assess relevant test layers for every
    feature; additions, changes, and removals must keep tests and any maintained
    indexes aligned.

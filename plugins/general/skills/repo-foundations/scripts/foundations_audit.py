@@ -178,6 +178,8 @@ def audit_repo(repo):
         path for name, path in relative.items()
         if Path(name).name.lower() in AGENT_INSTRUCTION_NAMES
     ]
+    agent_instruction_roots = {name.lower() for name in relative if "/" not in name}
+    has_both_agent_files = {"agents.md", "claude.md"} <= agent_instruction_roots
     ci_agent_instruction_check = check_is_wired(ci_files, AGENT_INSTRUCTION_CHECK, relative)
     hook_agent_instruction_check = check_is_wired(pre_push_hooks, AGENT_INSTRUCTION_CHECK, relative)
     all_ci_and_hooks = [path for path in ci_files]
@@ -208,6 +210,7 @@ def audit_repo(repo):
         ("test-index drift check in CI (heuristic)", ci_test_index_check, has_test_index),
         ("test-index drift check in pre-push hook (heuristic)", hook_test_index_check, has_test_index),
         ("agent instruction files detected (heuristic)", bool(agent_instruction_files), False),
+        ("root AGENTS.md and CLAUDE.md both present", has_both_agent_files, True),
         ("agent instruction validator in CI (heuristic)", ci_agent_instruction_check,
          bool(agent_instruction_files)),
         ("agent instruction validator in pre-push (heuristic)", hook_agent_instruction_check,
