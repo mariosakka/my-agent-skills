@@ -29,7 +29,7 @@ A reader should never meet a word they were not told about. Every concept is exp
 | an in-depth / detailed version | `references/shared-rules.md` + `references/detailed-rules.md` |
 | both | all three; keep the two versions consistent (same facts and figures, same chapter order, same terms defined in the same chapters) |
 
-Shared rules in one line: define each term at first use in the chapter where it is used (no opening glossary, acronyms expanded, each definition in a blockquote box), interpret values instead of narrating the method, no tables, draw spatial and process concepts as real images (no ASCII diagrams), no filler.
+Shared rules in one line: define each term at first use in the chapter where it is used (no opening glossary, acronyms expanded, each definition in a blockquote box), interpret values instead of narrating the method, no tables, draw spatial and process concepts and every defined device as real images (no ASCII diagrams), no filler.
 
 ## Helper scripts
 
