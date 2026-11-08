@@ -35,6 +35,7 @@ In the chapter of first use: what it is (one plain sentence) → what it does he
 
 - No tables: use graphs, or short bullet lists when there is no data to plot.
 - Draw every spatial or process concept (a diagram per idea; keep diagram files next to the document and check the labels do not overlap).
+- Every device, instrument, sensor or piece of equipment you define (a thermostat, a valve, a pyranometer, a lab instrument, a machine part) gets its own labelled diagram right after its definition box: what it looks like, its named parts, and how it works or what it measures (arrows for flows and signals). Use it in the simple and the in-depth version alike. Abstract concepts (a ratio, a law, a coefficient) do not need one.
 - Diagrams are real images (SVG or a plotted figure), never ASCII art or arrows typed in a code block: they print as raw monospace text in the PDF. If a diagram needs a sketch first, replace it with the image before building.
 - Code, data wrangling and hand calculations stay in the notebook; the markdown companion and the PDF omit them.
 - Use a notebook when there is code or data to run; plain markdown otherwise. Either way produce a markdown companion and a PDF.
