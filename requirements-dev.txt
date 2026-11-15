@@ -3,3 +3,5 @@ fpdf2
 Pillow
 Pygments
 pypdf
+pymupdf
+python-docx

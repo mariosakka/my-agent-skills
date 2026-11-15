@@ -3,13 +3,17 @@
   "name": "general",
   "displayName": "General",
   "version": "0.11.0",
-  "description": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports, teaching explanations from any source material",
+  "description": "General-purpose skills: PR inspection, syntax explanation, humanizing text, Markdown-to-PDF reports, teaching explanations from any source material, repository foundations, course lab workflow",
   "compat": {
     "source": "native",
     "manifestDir": ".muse-plugin"
   },
   "capabilities": {
     "skills": [
+      {
+        "id": "explanation-notebooks",
+        "path": "skills/explanation-notebooks/SKILL.md"
+      },
       {
         "id": "explain-syntax",
         "path": "skills/explain-syntax/SKILL.md"
