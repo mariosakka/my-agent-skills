@@ -55,7 +55,7 @@ gemini skills install $REPO --path plugins/general/skills/humanizer --consent
 gemini skills install $REPO --path plugins/general/skills/pr-inspect-and-act --consent
 gemini skills install $REPO --path plugins/general/skills/report-to-pdf --consent
 gemini skills install $REPO --path plugins/general/skills/repo-foundations --consent
-gemini skills install $REPO --path plugins/general/skills/lab-creation --consent
+gemini skills install $REPO --path plugins/general/skills/course-lab-workflow --consent
 ```
 
 Install only the skills you want. `--consent` skips the security confirmation prompt; drop it to review each one. Check the result with `gemini skills list`, and remove one with `gemini skills uninstall <name>`.
@@ -78,7 +78,7 @@ Notes:
 | [`pr-inspect-and-act`](plugins/general/skills/pr-inspect-and-act/SKILL.md) | Standard `gh` commands for reading, inspecting and acting on pull requests (comments, CI, reviews) |
 | [`report-to-pdf`](plugins/general/skills/report-to-pdf/SKILL.md) | Renders a Markdown report into a consistently styled PDF (title page, TOC, syntax-highlighted code, tables) |
 | [`repo-foundations`](plugins/general/skills/repo-foundations/SKILL.md) | Establishes project-specific structure, testing, CI, release, privacy, and workspace standards |
-| [`lab-creation`](plugins/general/skills/lab-creation/SKILL.md) | Creates or completes educational labs from assignments and existing course conventions |
+| [`course-lab-workflow`](plugins/general/skills/course-lab-workflow/SKILL.md) | Creates, solves and documents course labs end to end: repository setup, shared code and executed notebooks, a Moodle-style submission and a cumulative course overview (replaces `lab-creation`) |
 
 The colete-online skills moved to the separate repo `mariosakka/colete-online-skills`.
 

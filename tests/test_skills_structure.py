@@ -80,8 +80,8 @@ def test_every_skill_found():
     assert len(SKILLS) >= 7
 
 
-def test_lab_creation_skill_requires_lab_update_hook_with_bypass():
-    skill = next(skill for skill in SKILLS if skill.name == "lab-creation")
+def test_course_lab_workflow_skill_requires_lab_update_hook_with_bypass():
+    skill = next(skill for skill in SKILLS if skill.name == "course-lab-workflow")
     text = (skill / "SKILL.md").read_text(encoding="utf-8").lower()
     assert "git hook" in text
     assert "lab index" in text
@@ -89,8 +89,8 @@ def test_lab_creation_skill_requires_lab_update_hook_with_bypass():
     assert "documented bypass" in text
 
 
-def test_lab_creation_requires_indexed_reusable_tools_and_automation():
-    skill = next(skill for skill in SKILLS if skill.name == "lab-creation")
+def test_course_lab_workflow_requires_indexed_reusable_tools_and_automation():
+    skill = next(skill for skill in SKILLS if skill.name == "course-lab-workflow")
     text = " ".join((skill / "SKILL.md").read_text(encoding="utf-8").lower().split())
     assert "small, reusable set of tools" in text
     assert "purpose, prerequisites, and exact invocation" in text
