@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/mariosakka/my-agent-skills/compare/general-v0.11.0...general-v0.11.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **general:** list every skill in the Muse manifest and plugin descriptions; refresh README and dev requirements ([#32](https://github.com/mariosakka/my-agent-skills/issues/32)) ([25fe927](https://github.com/mariosakka/my-agent-skills/commit/25fe927672e41f490deb8ca2e4ca8bc4868acecf))
+
 ## [0.11.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.10.0...general-v0.11.0) (2026-11-15)
 
 
