@@ -76,7 +76,7 @@ Notes:
 | [`explanation-notebooks`](plugins/general/skills/explanation-notebooks/SKILL.md) | Teaches any subject from any source (docx, pptx, xlsx, csv, pdf, md): scripts extract metadata, text and images; simple and in-depth rules; define each concept at first use |
 | [`humanizer`](plugins/general/skills/humanizer/SKILL.md) | Removes AI-writing patterns from text to make it sound natural |
 | [`pr-inspect-and-act`](plugins/general/skills/pr-inspect-and-act/SKILL.md) | Standard `gh` commands for reading, inspecting and acting on pull requests (comments, CI, reviews) |
-| [`report-to-pdf`](plugins/general/skills/report-to-pdf/SKILL.md) | Renders a Markdown report into a consistently styled PDF (title page, TOC, syntax-highlighted code, tables) |
+| [`report-to-pdf`](plugins/general/skills/report-to-pdf/SKILL.md) | Renders a Markdown report into a consistently styled PDF (title page, TOC, syntax-highlighted code, tables, SVG figures with captions, definition boxes, LaTeX or Unicode maths) |
 | [`repo-foundations`](plugins/general/skills/repo-foundations/SKILL.md) | Establishes project-specific structure, testing, CI, release, privacy, and workspace standards |
 | [`course-lab-workflow`](plugins/general/skills/course-lab-workflow/SKILL.md) | Creates, solves and documents course labs end to end: repository setup, shared code and executed notebooks, a Moodle-style submission and a cumulative course overview (replaces `lab-creation`) |
 
@@ -125,7 +125,7 @@ pip install -r requirements-dev.txt
 bash scripts/run_tests.sh            # all tests; extra args go to pytest, e.g. -k manifests
 ```
 
-The shell-script tests need `bash` and `jq` (they skip when missing); the PDF tests need `fpdf2`, `Pillow` and `Pygments` (they skip when missing). The agent-instruction checker tests the 300-line ceiling and inline local Markdown links for `AGENTS.md`/`CLAUDE.md`.
+The shell-script tests need `bash` and `jq` (they skip when missing); the PDF tests need `fpdf2`, `Pillow`, `Pygments` and `pymupdf`, and the course-lab-workflow submission tests need `python-docx` (they skip when missing; `requirements-dev.txt` installs them all, so CI runs them). The agent-instruction checker tests the 300-line ceiling and inline local Markdown links for `AGENTS.md`/`CLAUDE.md`.
 
 ### Test Strategy
 

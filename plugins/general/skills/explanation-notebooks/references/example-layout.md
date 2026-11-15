@@ -15,3 +15,5 @@ lab-N/
 - For material without code, replace the notebooks by `<name>.md` files and keep the same `<name>/` folder with figures and the PDF.
 
 Choose any layout that keeps four things apart: the source, the explanations you write, the generated markdown companion with its figures, and the generated PDFs (not committed).
+
+For the rest of such a course repository (the Moodle-style submission, the cumulative course overview, the per-lab solving routine), see the `course-lab-workflow` skill.

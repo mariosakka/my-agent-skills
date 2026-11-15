@@ -129,3 +129,14 @@ def test_validate_script_passes():
                        encoding="utf-8", errors="replace")
     assert r.returncode == 0, r.stdout + r.stderr
     assert "validate.sh: OK" in r.stdout
+
+
+@pytest.mark.parametrize("plugin", PLUGIN_DIRS, ids=lambda p: p.name)
+def test_every_skill_is_listed_in_the_muse_manifest_and_the_readme(plugin):
+    skills = sorted(p.parent.name for p in (plugin / "skills").glob("*/SKILL.md"))
+    muse = {s["id"] for s in load(plugin / ".muse-plugin" / "plugin.json")["capabilities"]["skills"]}
+    assert muse == set(skills), f"Muse manifest skills differ from the skill folders: {muse ^ set(skills)}"
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    for name in skills:
+        assert f"plugins/{plugin.name}/skills/{name}/SKILL.md" in readme, f"README table is missing {name}"
+        assert f"--path plugins/{plugin.name}/skills/{name} " in readme, f"README Gemini install list is missing {name}"
