@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.10.0...general-v0.11.0) (2026-11-15)
+
+
+### Features
+
+* **course-lab-workflow:** rename lab-creation and add the lab, submission and overview workflow ([#30](https://github.com/mariosakka/my-agent-skills/issues/30)) ([4708680](https://github.com/mariosakka/my-agent-skills/commit/470868024e104706b7ce2d41e495064c0bb62e66))
+
 ## [0.10.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.9.0...general-v0.10.0) (2026-11-07)
 
 
