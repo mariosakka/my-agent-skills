@@ -1,16 +1,47 @@
 ---
-name: lab-creation
+name: course-lab-workflow
 description: >-
-  Create or complete educational laboratory exercises from an assignment,
-  lecture material, or existing course repository, with runnable work and
-  reproducible explanations appropriate to the requested deliverables.
+  Create, solve and document coursework labs end to end: set up the course
+  repository, solve each assignment with runnable shared code and executed
+  notebooks, write the explanation documents, the Moodle-style submission and
+  a cumulative course overview. Supersedes the former lab-creation skill; use
+  it whenever a lab, assignment, practical exercise or course lab repository
+  is created, completed, extended or submitted.
 ---
 
-# Lab Creation
+# Course Lab Workflow
 
 Use this skill for coursework labs and practical exercises. Adapt to the subject,
 assignment, course rules, and existing repository; a lab need not be Python,
 a notebook, or an AI exercise. Respect the user's requested depth and deliverables.
+
+It covers the whole life of a course lab repository: the repository itself
+(the Course Repository section below), understanding and building each lab, the optional deliverables
+(explanation notebooks, a Moodle-style submission, a course overview) and the
+hand-off. The details of the deliverables live in `references/`; read only the
+file for the deliverable the user asked for.
+
+## Course Lab Workflow
+
+| Need | Read |
+|---|---|
+| Layout of a lab, where computation lives, solving every sub-question, building the documents | `references/lab-layout-and-solving.md` |
+| The document a team uploads to Moodle (Word-style PDF with code and results) | `references/moodle-submission.md` |
+| A short cumulative report over all labs, extended lab by lab | `references/course-overview.md` |
+| Mistakes that cost time before (escape bugs, page gaps, stale edits) | `references/pitfalls.md` |
+
+Writing rules for teaching documents (definitions at first use, simple and
+in-depth versions, diagrams) belong to the `explanation-notebooks` skill, and
+the PDF renderer to `report-to-pdf`; this skill only says when to use them.
+
+Reference implementations bundled with this skill (copy them into the course
+repository's `tools/` and adapt the settings at the top):
+
+- `scripts/build_submission.py`: restricted markdown to `.docx` to PDF. Needs
+  `python-docx` and `pygments`, and LibreOffice or Microsoft Word for the PDF.
+- `scripts/build_overview.py`: joins `overview/parts/*.md` into one markdown
+  file and renders it with `report-to-pdf` (set `REPORT_TO_PDF_SCRIPT` or
+  install that skill under `~/.claude/plugins`).
 
 ## Course Repository
 
