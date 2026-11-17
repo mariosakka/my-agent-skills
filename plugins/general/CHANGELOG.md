@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.11.1...general-v0.12.0) (2026-11-17)
+
+
+### Features
+
+* **exam-quiz-site:** add skill for building local quiz sites from exam-dump PDFs ([20c7f94](https://github.com/mariosakka/my-agent-skills/commit/20c7f9413e0915b85ec57a5a4d114b53650784bd))
+
 ## [0.11.1](https://github.com/mariosakka/my-agent-skills/compare/general-v0.11.0...general-v0.11.1) (2026-11-15)
 
 
