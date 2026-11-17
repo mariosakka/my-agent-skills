@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.12.0...general-v0.13.0) (2026-11-17)
+
+
+### Features
+
+* **exam-quiz-site:** Learn-style layout, case studies, ordering questions and stopwatch ([#35](https://github.com/mariosakka/my-agent-skills/issues/35)) ([c84c48d](https://github.com/mariosakka/my-agent-skills/commit/c84c48d1df98b51ff7696af096cdeda08cb8acb2))
+
 ## [0.12.0](https://github.com/mariosakka/my-agent-skills/compare/general-v0.11.1...general-v0.12.0) (2026-11-17)
 
 
