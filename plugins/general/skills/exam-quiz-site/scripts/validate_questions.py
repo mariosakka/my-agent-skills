@@ -7,7 +7,8 @@ Exit 0 = valid, 1 = errors (printed one per line). Standard library only.
 import json
 import sys
 
-TYPES = {"single", "multi", "matrix"}
+TYPES = {"single", "multi", "matrix", "matching", "ordering"}
+ITEM_TYPES = {"matrix", "matching"}
 
 
 def check(bank, expect=None):
@@ -29,7 +30,7 @@ def check(bank, expect=None):
             err("empty question text")
         if "\ufffd" in json.dumps(q, ensure_ascii=False):
             err("contains U+FFFD (bad PDF text encoding)")
-        if q["type"] == "matrix":
+        if q["type"] in ITEM_TYPES:
             items = q.get("items") or []
             if not items:
                 err("matrix needs items")
@@ -52,6 +53,8 @@ def check(bank, expect=None):
                 err("single must have exactly one answer")
             if q["type"] == "multi" and len(ans) < 2:
                 err("multi must have at least two answers")
+            if q["type"] == "ordering" and len(set(ans)) != len(ans):
+                err("ordering answer repeats an option")
     return errs
 
 

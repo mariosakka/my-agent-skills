@@ -1,78 +1,198 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI-901 Quiz</title>
+<title>Exam Quiz</title>
 <style>
-body{font:16px system-ui,sans-serif;max-width:820px;margin:0 auto;padding:16px;background:#f5f6f8;color:#1c1e21}
-.card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px #0002;margin-bottom:14px}
-button{font:inherit;padding:8px 16px;border:1px solid #888;border-radius:6px;background:#fff;cursor:pointer}
-button.primary{background:#0b5fff;color:#fff;border-color:#0b5fff}
-button:disabled{opacity:.4;cursor:default}
-.opt{display:block;padding:10px 12px;margin:6px 0;border:1px solid #ccd;border-radius:6px;cursor:pointer}
-.opt.sel{border-color:#0b5fff;background:#eaf1ff}
-.opt.ok{background:#d9f7d9;border-color:#2a9d2a}.opt.bad{background:#fbd9d9;border-color:#c33}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
-#q{white-space:pre-wrap}
-.timer{font-weight:bold;font-variant-numeric:tabular-nums}.timer.low{color:#c33}
-.item{margin:8px 0;padding:8px;border-left:3px solid #ccd}
-.item.ok{border-color:#2a9d2a}.item.bad{border-color:#c33}
-select{font:inherit;padding:4px;max-width:100%}
-.expl{margin-top:12px;padding:10px;background:#f0f3f7;border-radius:6px;white-space:pre-wrap}
-.note{color:#a60;font-size:14px}
-.bar{height:6px;background:#dde;border-radius:3px}.bar>i{display:block;height:100%;background:#0b5fff;border-radius:3px}
+:root{--ac:#0078d4;--ac2:#106ebe;--tx:#323130;--mut:#605e5c;--bd:#8a8886;--lt:#edebe9;--bg:#faf9f8;--ok:#107c10;--okbg:#dff6dd;--bad:#a4262c;--badbg:#fde7e9;--warn:#8a5a00;--warnbg:#fff4ce}
+*{box-sizing:border-box}
+body{margin:0;font:18px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;color:var(--tx);background:#fff}
+a{color:var(--ac)}
+.top{background:#fff;border-bottom:1px solid var(--lt);position:sticky;top:0;z-index:5}
+.top .in{max-width:1560px;margin:0 auto;padding:12px 28px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.top h1{font-size:17px;font-weight:600;margin:0;color:var(--mut)}
+.qn{font-weight:600}
+.bar{height:4px;background:var(--lt)}.bar>i{display:block;height:100%;background:var(--ac)}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 28px 110px}
+.wrap.case{max-width:1560px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start}
+@media(max-width:980px){.wrap.case{display:block}}
+button{font:inherit;font-weight:600;padding:9px 22px;border:1px solid var(--ac);border-radius:2px;background:#fff;color:var(--ac);cursor:pointer}
+button:hover:not(:disabled){background:#eff6fc}
+button.primary{background:var(--ac);color:#fff}button.primary:hover:not(:disabled){background:var(--ac2)}
+button:disabled{opacity:.45;cursor:default}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--lt);padding:14px 28px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+h2.q{font-size:24px;line-height:1.4;font-weight:600;margin:0 0 20px;white-space:pre-wrap}
+.hint{color:var(--mut);margin:0 0 12px}
+.opt{display:flex;gap:14px;align-items:flex-start;padding:15px 20px;margin:10px 0;border:1px solid var(--bd);border-radius:2px;cursor:pointer;background:#fff}
+.opt:hover{background:#f3f2f1}
+.opt input{margin-top:7px;width:18px;height:18px;accent-color:var(--ac)}
+.opt:has(input:checked){border:2px solid var(--ac);padding:14px 19px;background:#eff6fc}
+.opt.ok,.opt.ok:has(input:checked){border:2px solid var(--ok);background:var(--okbg);padding:14px 19px}
+.opt.bad,.opt.bad:has(input:checked){border:2px solid var(--bad);background:var(--badbg);padding:14px 19px}
+.item{padding:18px 20px;margin:12px 0;border:1px solid var(--lt);border-left:4px solid var(--bd);background:var(--bg)}
+.item.ok{border-left-color:var(--ok)}.item.bad{border-left-color:var(--bad)}
+.item select{display:block;margin-top:10px;font:inherit;padding:9px 10px;border:1px solid var(--bd);border-radius:2px;max-width:100%;background:#fff}
+.seq{padding:10px;border:1px dashed var(--bd);min-height:52px;background:var(--bg)}
+.seq.ok{border:2px solid var(--ok);background:var(--okbg)}.seq.bad{border:2px solid var(--bad);background:var(--badbg)}
+.pool{margin-top:10px}.pool button,.seq button{margin:4px 8px 4px 0;text-align:left;font-weight:400}
+.result{margin-top:24px;border:1px solid var(--lt);border-left:6px solid var(--ok);padding:18px 24px}
+.result.bad{border-left-color:var(--bad)}
+.result h3{margin:0 0 8px;font-size:22px}.result h3.ok{color:var(--ok)}.result h3.bad{color:var(--bad)}
+.result h4{margin:16px 0 4px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.result p{margin:4px 0;white-space:pre-wrap}
+.note{background:var(--warnbg);color:var(--warn);padding:10px 14px;border-left:4px solid #f7c948;margin:0 0 20px;font-size:16px}
+.timer{font-weight:600;font-variant-numeric:tabular-nums}.timer.low{color:var(--bad)}
+/* case study panel */
+.casebox{border:1px solid var(--lt);background:var(--bg)}
+@media(min-width:981px){.casebox{position:sticky;top:76px;max-height:calc(100vh - 170px);overflow:auto}}
+.chead{background:#fff;border-bottom:1px solid var(--lt)}
+@media(min-width:981px){.chead{position:sticky;top:0;z-index:3}} /* z-index: the bullets are position:relative and would paint over it */
+.ct{padding:14px 20px;font-size:19px;font-weight:600;border-bottom:1px solid var(--lt)}
+.tabs{display:flex;flex-wrap:wrap;background:#fff}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;color:var(--tx);font-weight:400;padding:10px 14px;font-size:16px}
+.tabs button.on{border-bottom-color:var(--ac);font-weight:600;color:var(--ac)}
+.cbody{padding:10px 22px 22px;font-size:17px}
+.cbody h5{font-size:18px;margin:20px 0 6px;font-weight:600}
+.cbody p{margin:8px 0}
+.cbody p.b{padding-left:16px;position:relative}.cbody p.b:before{content:"•";position:absolute;left:3px}
+/* home */
+.home{text-align:center;min-height:calc(100vh - 60px);display:flex;flex-direction:column;justify-content:center;padding-bottom:60px}.home h2{font-weight:600;font-size:32px;margin-top:0}
+.home .stat{color:var(--mut)}
+.home .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;justify-content:center}
 </style></head><body>
 <div id="app"></div>
 <script>
-const KEY='ai901-progress';
-let ALL=[],byId={},prog=JSON.parse(localStorage.getItem(KEY)||'{}'); // prog[id]={sel,ok}
-let queue=[],idx=0,timed=false,left=60,tick=null,draft={},paused=false;
-const $=s=>document.querySelector(s),save=()=>localStorage.setItem(KEY,JSON.stringify(prog));
+const DATA=new URLSearchParams(location.search).get('data')||'questions.json';
+const KEY='quiz-progress:'+DATA;
+let ALL=[],byId={},prog={};try{prog=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){} // prog[id]={sel,ok}
+let sw0=0,swTick=null,swDone=null; // untimed mode: stopwatch for the whole run
+let queue=[],idx=0,timed=false,left=60,tick=null,draft={},paused=false,caseTab=0;
+const $=s=>document.querySelector(s),save=()=>{try{localStorage.setItem(KEY,JSON.stringify(prog))}catch(e){}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const isItems=q=>q.type=='matrix'||q.type=='matching';
 const stats=()=>({done:Object.keys(prog).length,wrong:ALL.filter(q=>prog[q.id]&&!prog[q.id].ok).length,right:ALL.filter(q=>prog[q.id]?.ok).length});
 
-fetch('questions.json').then(r=>r.json()).then(d=>{ALL=d;d.forEach(q=>byId[q.id]=q);home()})
- .catch(e=>$('#app').innerHTML='Could not load questions.json — run the server from this folder. '+e);
+fetch(DATA).then(r=>r.json()).then(d=>{ALL=d;d.forEach(q=>byId[q.id]=q);home()})
+ .catch(e=>$('#app').innerHTML='<div class="wrap">Could not load '+esc(DATA)+' — run the server from this folder. '+esc(e)+'</div>');
 
 function home(){
- clearInterval(tick);const s=stats();
- $('#app').innerHTML=`<div class="card"><h2>AI-901 Quiz</h2>
- <p>${ALL.length} questions · answered ${s.done} · correct ${s.right} · wrong ${s.wrong}</p>
- <label><input type="checkbox" id="timed"> Timed mode (1 min per question)</label><br><br>
- <button class="primary" onclick="start('all')">All questions</button>
+ clearInterval(tick);clearInterval(swTick);const s=stats(),flagged=ALL.filter(q=>q.sus).length;
+ $('#app').innerHTML=`<div class="wrap home"><h2>${esc(document.title)}</h2>
+ <p class="stat">${ALL.length} questions · answered ${s.done} · correct ${s.right} · wrong ${s.wrong}</p>
+ ${flagged?`<p class="note">${flagged} questions are flagged as possibly wrong or ambiguous in the source.</p>`:''}
+ <label><input type="checkbox" id="timed"> Timed mode (1 minute per question)</label>
+ <div class="btns"><button class="primary" onclick="start('all')">All questions</button>
  <button onclick="start('new')" ${ALL.length-s.done?'':'disabled'}>Unanswered (${ALL.length-s.done})</button>
  <button onclick="start('wrong')" ${s.wrong?'':'disabled'}>Practice wrong only (${s.wrong})</button>
  <button onclick="start('shuffle')">Shuffled</button>
- <button onclick="reset()" style="float:right">Reset all</button></div>`;
+ <button onclick="reset()">Reset all</button></div></div>`;
 }
 function reset(){if(confirm('Clear all saved answers?')){prog={};save();home()}}
 function start(m){
  timed=$('#timed').checked;
+ clearInterval(swTick);swDone=null;sw0=Date.now();if(!timed)swTick=setInterval(swUpdate,1000);
  let l=ALL.map(q=>q.id);
  if(m=='wrong')l=l.filter(i=>prog[i]&&!prog[i].ok);
  if(m=='new')l=l.filter(i=>!prog[i]);
  if(m=='shuffle')l.sort(()=>Math.random()-.5);
  queue=l;idx=0;show();
 }
-function show(){
- clearInterval(tick);paused=false;
+
+/* ---- case study: the shared scenario is shown as tabs next to the question ---- */
+const H1=['Background','Current environment','Business requirements','Technical requirements','Issues and constraints','Problem statement'];
+const H2=['Channels','Identity and access','Data sources','Integration mechanisms','Omnichannel support','Self-service capabilities','Human escalation','Knowledge integration','Performance metrics','Platform constraints','Authentication','Compliance and security','Monitoring and maintenance'];
+const ABBR=/\b(Inc|e\.g|i\.e|vs|etc|No|Ltd|Corp)\.$/;
+// shortcut: headings are the known lists above (found in the AB-620 bank); unknown headings just render as plain text.
+function splitCase(text){ // [{h, body, dashed}]; the text stays intact, headings and separators only drive the layout
+ const dashed=/(?:^|\s)Background\s-\s/.test(text);
+ const re=new RegExp('(?:^|\\s)('+H1.join('|')+')(?:\\s-\\s|\\s(?=[A-Z]))','g'),hits=[...text.matchAll(re)];
+ if(!hits.length)return [{h:'Case study',body:text,dashed}];
+ return hits.map((m,i)=>({dashed,h:m[1],body:text.slice(m.index+m[0].length,i+1<hits.length?hits[i+1].index:undefined).trim()}));
+}
+function labelSplit(s){ // break before "Label: text" runs, but not inside a capitalised name ("Microsoft Teams:")
+ const cuts=[0];
+ for(const m of s.matchAll(/\s(?=[A-Z][\w-]*(?: [\w/&-]+){0,3}: )/g)){
+  const prev=s.slice(0,m.index).match(/(\S+)$/);
+  if(prev&&(/:$/.test(prev[1])||/^[A-Z]/.test(prev[1])&&!/[.!?)]$/.test(prev[1])))continue;
+  cuts.push(m.index+1);
+ }
+ return cuts.map((c,i)=>s.slice(c,cuts[i+1]).trim()).filter(Boolean);
+}
+function bodyHTML(body,dashed){ // dashed banks write "Heading - text" (unambiguous); dashless ones need a sentence start before the heading
+ const A=H2.join('|'),h2=new RegExp(dashed?'(?<=^|\\s)('+A+')\\s-\\s':'(?<=^|[.:)]\\s)('+A+')\\s(?![A-Z]{2,5}:)(?=[A-Z])','g');
+ let out='',last=0,m;const pieces=[];
+ while((m=h2.exec(body))){pieces.push({t:body.slice(last,m.index)});pieces.push({h:m[1]});last=m.index+m[0].length}
+ pieces.push({t:body.slice(last)});
+ for(const p of pieces){
+  if(p.h){out+=`<h5>${esc(p.h)}</h5>`;continue}
+  if(!p.t.trim())continue;
+  // " - " left after the headings separates list items; then sentences; then "Label:" runs
+  const dash=/\s-\s/.test(p.t),dot=p.t.includes('•'); // dash lists bullet every line; after a bullet mark only the first segment is an intro sentence
+  for(const [n,seg] of p.t.split(/\s-\s|\s*•\s*/).entries()){
+   const sents=[];let cur='';
+   for(const w of seg.trim().split(/(?<=[.!?])\s+(?=[A-Z(])/)){cur=cur?cur+' '+w:w;if(!ABBR.test(w)){sents.push(cur);cur=''}}
+   if(cur)sents.push(cur);
+   for(const s of sents)for(const u of labelSplit(s))
+    out+=`<p class="${dash||dot&&n?'b':''}">${esc(u).replace(/^([A-Z][^:]{1,45}):\s/,'<b>$1:</b> ')}</p>`;
+  }
+ }
+ return out;
+}
+function caseHTML(q){
+ const i=q.question.lastIndexOf('\n');
+ if(q.question.length<1200||i<0)return null;
+ const secs=splitCase(q.question.slice(0,i).trim());
+ caseTab=Math.min(caseTab,secs.length-1);
+ return {question:q.question.slice(i+1).trim(),html:`<div class="casebox"><div class="chead"><div class="ct">Case study</div>
+ <div class="tabs">${secs.map((s,n)=>`<button class="${n==caseTab?'on':''}" onclick="caseTab=${n};show(true)">${esc(s.h)}</button>`).join('')}</div></div>
+ <div class="cbody">${bodyHTML(secs[caseTab].body,secs[caseTab].dashed)}</div></div>`};
+}
+
+function banner(q){
+ if(!q.sus)return '';
+ const why=typeof q.sus=='string'?q.sus:(q.sus_reasons||[]).join(' ');
+ return `<p class="note">⚠ Possibly wrong in the source${q.validation_status?' ('+esc(q.validation_status)+')':''}: ${esc(why||'answer may be wrong or ambiguous')}</p>`;
+}
+function ordBody(q,done){
+ const ch=draft.k||[],txt=k=>q.options.find(o=>o.key==k).text;
+ return `<p class="hint">Pick ${q.answer.length} actions in order: click an action to add it, click a placed one to remove it.</p>
+ <div class="seq" id="seq">${ch.map((k,n)=>`<button ${done?'disabled':''} onclick="ordRm('${k}')">${n+1}. ${esc(txt(k))}</button>`).join('')||'<span class="hint">Answer area (empty)</span>'}</div>
+ <div class="pool">${q.options.filter(o=>!ch.includes(o.key)).map(o=>`<button ${done||ch.length>=q.answer.length?'disabled':''} onclick="ordAdd('${o.key}')">${esc(o.text)}</button>`).join('')}</div>`;
+}
+function ordAdd(k){clearInterval(tick);(draft.k=draft.k||[]).push(k);$('#body').innerHTML=ordBody(byId[queue[idx]],false)}
+function ordRm(k){draft.k=draft.k.filter(x=>x!=k);$('#body').innerHTML=ordBody(byId[queue[idx]],false)}
+
+function show(keep){ // keep=true re-renders the same unanswered question (case tab switch) without losing the draft or the clock
+ clearInterval(tick);
  const q=byId[queue[idx]],p=prog[q.id],done=!!p;
- draft=done?JSON.parse(JSON.stringify(p.sel)):{};
- const body=q.type=='matrix'
-  ? q.items.map((it,i)=>`<div class="item" id="it${i}">${esc(it.text)}<br><select onchange="draft[${i}]=this.value;clearInterval(tick)" ${done?'disabled':''}><option value="">— choose —</option>${it.options.map(o=>`<option ${draft[i]==o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`).join('')
-  : q.options.map(o=>`<label class="opt" id="o${o.key}"><input type="${q.type=='multi'?'checkbox':'radio'}" name="a" value="${o.key}" ${(draft.k||[]).includes(o.key)?'checked':''} ${done?'disabled':''} onchange="pick()"> <b>${o.key}.</b> ${esc(o.text)}</label>`).join('');
- $('#app').innerHTML=`<div class="row"><button onclick="home()">Home</button><span>${idx+1} / ${queue.length} (Q${q.id})</span>${timed?'<span class="timer" id="t"></span>':''}</div>
- <div class="bar"><i style="width:${(idx+1)/queue.length*100}%"></i></div><br>
- <div class="card">${q.sus?`<p class="note">⚠ Possibly wrong in the source PDF: ${esc(q.sus)}</p>`:''}<p id="q">${esc(q.question)}</p>${q.type=='multi'?'<p><i>Select all that apply.</i></p>':''}${body}
- <div id="fb"></div></div>
- <div class="row"><button onclick="go(-1)" ${idx?'':'disabled'}>← Prev</button>
- <button onclick="resetQ()">↺ Reset question</button>${timed&&!done?'<button id="pz" onclick="pause()">⏸ Pause</button>':''}
- <button class="primary" id="chk" onclick="check()" ${done?'disabled':''}>Check answer</button>
+ const keepDraft=keep&&!done?JSON.parse(JSON.stringify(draft)):null;
+ if(!keep)paused=false;
+ draft=done?JSON.parse(JSON.stringify(p.sel)):(keepDraft||{});
+ const c=caseHTML(q);
+ const body=isItems(q)
+  ? q.items.map((it,i)=>`<div class="item" id="it${i}">${esc(it.text)}<select onchange="draft[${i}]=this.value;clearInterval(tick)" ${done?'disabled':''}><option value="">— choose —</option>${it.options.map(o=>`<option ${draft[i]==o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`).join('')
+  : q.type=='ordering' ? ordBody(q,done)
+  : q.options.map(o=>`<label class="opt" id="o${o.key}"><input type="${q.type=='multi'?'checkbox':'radio'}" name="a" value="${esc(o.key)}" ${(draft.k||[]).includes(o.key)?'checked':''} ${done?'disabled':''} onchange="pick()"><span><b>${esc(o.key)}.</b> ${esc(o.text)}</span></label>`).join('');
+ $('#app').innerHTML=`<div class="top"><div class="in"><button onclick="home()">Home</button><span class="qn">Question ${idx+1} of ${queue.length}</span><h1>${esc(document.title)} · Q${q.id}</h1>${timed?'<span class="timer" id="t"></span>':'<span class="timer" id="sw"></span>'}</div>
+ <div class="bar"><i style="width:${(idx+1)/queue.length*100}%"></i></div></div>
+ <div class="wrap${c?' case':''}">${c?c.html:''}<div>${banner(q)}<h2 class="q" id="q">${esc(c?c.question:q.question)}</h2>${q.type=='multi'?'<p class="hint">Select all that apply.</p>':''}
+ <div id="body">${body}</div><div id="fb"></div></div></div>
+ <div class="nav"><button onclick="go(-1)" ${idx?'':'disabled'}>← Previous</button>
+ <button onclick="resetQ()">↺ Reset question</button>${timed&&!done?`<button id="pz" onclick="pause()">${paused?'▶ Resume':'⏸ Pause'}</button>`:''}
+ <button class="primary" id="chk" onclick="check()" ${done?'disabled':''}>Submit answer</button>
  <button onclick="go(1)" ${idx<queue.length-1?'':'disabled'}>Next →</button></div>`;
+ swUpdate();
  if(done)feedback(q,p.sel);
- else if(timed){left=60;t();run()}
- else if(timed===false){}
+ else if(timed){if(keep){t();if(!paused&&!hasPick())run()}else{left=60;t();run()}}
+}
+function fmt(ms){const t=Math.floor(ms/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60,z=n=>String(n).padStart(2,'0');return (h?h+':'+z(m):m)+':'+z(x)}
+function swUpdate(){const e=$('#sw');if(e)e.textContent='⏱ '+fmt(swDone??Date.now()-sw0)+(swDone!=null?' (finished)':'')}
+function finishCheck(){ // untimed run is finished when every question in the queue has an answer: freeze the clock and show the total
+ if(timed||swDone!=null||!queue.every(i=>prog[i]))return;
+ swDone=Date.now()-sw0;clearInterval(swTick);swUpdate();
+ const right=queue.filter(i=>prog[i].ok).length;
+ $('#fb').insertAdjacentHTML('afterbegin',`<p class="note">🏁 Finished ${queue.length} questions in ${fmt(swDone)} — ${right} correct, ${queue.length-right} wrong.</p>`);
 }
 function run(){clearInterval(tick);tick=setInterval(()=>{left--;t();if(left<=0){clearInterval(tick);check(true)}},1000)}
-function pause(){paused=!paused;$('#pz').textContent=paused?'▶ Resume':'⏸ Pause';if(paused)clearInterval(tick);else if(!hasPick())run();document.querySelectorAll('#app .card input,#app .card select').forEach(e=>e.disabled=paused);$('#chk').disabled=paused}
+function pause(){paused=!paused;$('#pz').textContent=paused?'▶ Resume':'⏸ Pause';if(paused)clearInterval(tick);else if(!hasPick())run();document.querySelectorAll('.wrap input,.wrap select,#body button').forEach(e=>e.disabled=paused);$('#chk').disabled=paused}
 function hasPick(){return (draft.k||[]).length||Object.keys(draft).some(k=>k!=='k'&&draft[k])}
 function resetQ(){delete prog[queue[idx]];save();show()}
 function t(){const e=$('#t');if(e){e.textContent='⏱ '+left+'s';e.className='timer'+(left<=10?' low':'')}}
@@ -82,17 +202,32 @@ function check(timeout){
  const q=byId[queue[idx]];clearInterval(tick);
  const sel=JSON.parse(JSON.stringify(draft));
  let ok;
- if(q.type=='matrix')ok=q.items.every((it,i)=>sel[i]===it.answer);
+ if(isItems(q))ok=q.items.every((it,i)=>sel[i]===it.answer);
+ else if(q.type=='ordering')ok=JSON.stringify(sel.k||[])==JSON.stringify(q.answer);
  else{const a=[...q.answer].sort().join(),s=[...(sel.k||[])].sort().join();ok=a==s}
- prog[q.id]={sel,ok};save();show();
+ prog[q.id]={sel,ok};save();show();finishCheck();
  if(timeout)$('#fb').insertAdjacentHTML('afterbegin','<p class="note">⏱ Time ran out.</p>');
+}
+function links(q){
+ const u=[...new Set([q.docs_url,...(q.docs_urls||[])].filter(x=>/^https:\/\//.test(x||'')))];
+ return u.length?`<h4>Learn more</h4>${u.map(x=>`<p><a href="${esc(x)}" target="_blank" rel="noopener">${esc(x)}</a></p>`).join('')}`:'';
+}
+function correctText(q){
+ if(isItems(q))return q.items.map(it=>`${it.text} → ${it.answer}`).join('\n');
+ if(q.type=='ordering')return q.answer.map((k,n)=>`${n+1}. ${q.options.find(o=>o.key==k).text}`).join('\n');
+ return q.answer.map(k=>`${k}. ${q.options.find(o=>o.key==k).text}`).join('\n');
 }
 function feedback(q,sel){
  const ok=prog[q.id].ok;
- if(q.type=='matrix')q.items.forEach((it,i)=>{const e=$('#it'+i);const good=sel[i]===it.answer;e.classList.add(good?'ok':'bad');if(!good)e.insertAdjacentHTML('beforeend',`<div>Correct: <b>${esc(it.answer)}</b></div>`)});
+ if(isItems(q))q.items.forEach((it,i)=>{const e=$('#it'+i);const good=sel[i]===it.answer;e.classList.add(good?'ok':'bad');if(!good)e.insertAdjacentHTML('beforeend',`<div>Correct answer: <b>${esc(it.answer)}</b></div>`)});
+ else if(q.type=='ordering')$('#seq').classList.add(ok?'ok':'bad');
  else q.options.forEach(o=>{const e=$('#o'+o.key);if(q.answer.includes(o.key))e.classList.add('ok');else if((sel.k||[]).includes(o.key))e.classList.add('bad')});
- $('#fb').innerHTML=`<p><b>${ok?'✅ Correct':'❌ Wrong'}</b></p>`+(q.explanation?`<div class="expl">${esc(q.explanation)}</div>`:'')
-  +(q.docs_explanation?`<div class="expl"><b>From Microsoft docs:</b> ${esc(q.docs_explanation)}${q.docs_note?`<br><i>${esc(q.docs_note)}</i>`:''}${/^https:\/\//.test(q.docs_url||'')?`<br><a href="${esc(q.docs_url)}" target="_blank" rel="noopener">${esc(q.docs_url)}</a>`:''}</div>`:'');
+ const vt=q.verified_answer&&q.verified_answer.text;
+ $('#fb').innerHTML=`<div class="result${ok?'':' bad'}"><h3 class="${ok?'ok':'bad'}">${ok?'✓ Correct':'✕ Incorrect'}</h3>`
+  +(ok?'':`<h4>Correct answer</h4><p>${esc(correctText(q))}</p>`)
+  +(q.explanation?`<h4>Explanation</h4><p>${esc(q.explanation)}</p>`:'')
+  +(q.docs_explanation&&q.docs_explanation!==q.explanation?`<h4>From Microsoft docs</h4><p>${esc(q.docs_explanation)}${q.docs_note?`\n${esc(q.docs_note)}`:''}</p>`:'')
+  +(q.sus&&vt?`<h4>Review note</h4><p>${esc(vt)}</p>`:'')+links(q)+'</div>';
 }
 document.addEventListener('keydown',e=>{if(!queue.length||!$('#chk'))return;if(e.key=='ArrowRight'&&idx<queue.length-1)go(1);if(e.key=='ArrowLeft'&&idx>0)go(-1)});
 </script></body></html>

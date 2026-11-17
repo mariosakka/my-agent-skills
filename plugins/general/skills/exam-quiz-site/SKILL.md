@@ -11,20 +11,22 @@ Turns an exam-dump PDF into a local, single-file quiz site plus a verified `ques
 
 - `questions.json`: the question bank (schema below).
 - `index.html`: copy of `assets/index.html`. It loads `questions.json` with `fetch`, so it must be served over HTTP (`python -m http.server 8901 --bind 127.0.0.1`), not opened as a file.
-- Site features (already in the template): timed mode (60 s per question, stops when an answer is picked, Pause/Resume), Prev/Next (arrow keys too), Check answer with explanation, "Practice wrong only", unanswered-only, shuffled, Reset question, Reset all, progress saved in `localStorage`, "possibly wrong" banner for questions with `sus`, optional "From Microsoft docs" block from `docs_*` fields.
+- Site features (already in the template): timed mode (60 s per question, stops when an answer is picked, Pause/Resume), a running stopwatch with a finish summary when timed mode is off, Prev/Next (arrow keys too), Check answer with explanation, "Practice wrong only", unanswered-only, shuffled, Reset question, Reset all, progress saved in `localStorage`, ordering questions, a Microsoft Learn practice-test look (Segoe UI, blue accent, bordered answer boxes, Correct/Incorrect panel with explanation and Learn-more links), case studies shown as a tabbed panel beside the question (see below), "possibly wrong" banner for questions with `sus`, optional "From Microsoft docs" block and links from `docs_*` fields. The bank file can be chosen with `index.html?data=other.json` (default `questions.json`); progress is stored per file name.
 
 ## Schema
 
 ```json
-{"id": 1, "type": "single|multi|matrix", "question": "full text, code included, no 'Question N' header",
+{"id": 1, "type": "single|multi|matrix|matching|ordering", "question": "full text, code included, no 'Question N' header",
  "options": [{"key": "A", "text": "..."}], "answer": ["D"],
  "items": [{"text": "statement or blank label", "options": ["Yes", "No"], "answer": "No"}],
  "explanation": "from the source, condensed",
- "sus": "optional: why the marked answer may be wrong (banner)",
- "docs_explanation": "optional", "docs_note": "optional", "docs_url": "optional https URL"}
+ "sus": "optional: string with why the marked answer may be wrong, or true plus sus_reasons: [strings]",
+ "validation_status": "optional label shown in the banner",
+ "docs_explanation": "optional (hidden when identical to explanation)", "docs_note": "optional",
+ "docs_url": "optional https URL", "docs_urls": ["optional https URLs"]}
 ```
 
-- `single` and `multi` use `options` + `answer`. `matrix` (HOTSPOT, DRAG DROP, Yes/No sets, "select the answer that completes the sentence") uses `items` only; for drag-drop, each target is an item and `options` is the full pool.
+- `single` and `multi` use `options` + `answer`. `matrix` (HOTSPOT, DRAG DROP, Yes/No sets, "select the answer that completes the sentence") uses `items` only; for drag-drop, each target is an item and `options` is the full pool. `matching` is rendered exactly like `matrix`. `ordering` (arrange N actions in sequence) uses `options` with unique keys and `answer` as the ordered list of keys.
 - Scoring always follows the source's marked answer. Doubts go in `sus` and `docs_*`; never silently change the key.
 
 ## Workflow
@@ -45,6 +47,7 @@ Turns an exam-dump PDF into a local, single-file quiz site plus a verified `ques
 
 - A source can disagree with the docs, with itself (explanation vs marked answer), or be garbled; record it, do not "fix" it.
 - A PDF explanation can be a placeholder; mark it, or write one and say it is bank-authored.
-- The page fetches a fixed filename; keep `questions.json` next to `index.html` or change the `fetch` call.
+- The page fetches `questions.json` by default; keep it next to `index.html` or open `index.html?data=<file>`.
+- Case studies: the background is the text before the last line of `question` (the last line is the question itself). The template lays it out as tabs using the known headings `H1` (Background, Current environment, ...) and `H2` (Channels, Data sources, ...) near the top of the script's case-study section, then bullets and `Label:` runs. These lists come from the AB-620 bank; for a new exam, add its headings there, otherwise unknown headings render as plain paragraphs. The layout never drops or reorders text; check this by comparing the word sequence of the source and the rendered panel, which was done for all four AB-620 variants.
 - Git Bash `/tmp` and Windows Python `/tmp` are different folders; use the scratchpad with absolute Windows-style paths.
 - Before zipping the project, delete intermediate files (per-slice JSON, audit reports, extra copies of the bank) and keep `index.html`, `questions.json`, and optionally the source PDF.
