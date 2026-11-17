@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI-901 Quiz</title>
+<style>
+body{font:16px system-ui,sans-serif;max-width:820px;margin:0 auto;padding:16px;background:#f5f6f8;color:#1c1e21}
+.card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px #0002;margin-bottom:14px}
+button{font:inherit;padding:8px 16px;border:1px solid #888;border-radius:6px;background:#fff;cursor:pointer}
+button.primary{background:#0b5fff;color:#fff;border-color:#0b5fff}
+button:disabled{opacity:.4;cursor:default}
+.opt{display:block;padding:10px 12px;margin:6px 0;border:1px solid #ccd;border-radius:6px;cursor:pointer}
+.opt.sel{border-color:#0b5fff;background:#eaf1ff}
+.opt.ok{background:#d9f7d9;border-color:#2a9d2a}.opt.bad{background:#fbd9d9;border-color:#c33}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+#q{white-space:pre-wrap}
+.timer{font-weight:bold;font-variant-numeric:tabular-nums}.timer.low{color:#c33}
+.item{margin:8px 0;padding:8px;border-left:3px solid #ccd}
+.item.ok{border-color:#2a9d2a}.item.bad{border-color:#c33}
+select{font:inherit;padding:4px;max-width:100%}
+.expl{margin-top:12px;padding:10px;background:#f0f3f7;border-radius:6px;white-space:pre-wrap}
+.note{color:#a60;font-size:14px}
+.bar{height:6px;background:#dde;border-radius:3px}.bar>i{display:block;height:100%;background:#0b5fff;border-radius:3px}
+</style></head><body>
+<div id="app"></div>
+<script>
+const KEY='ai901-progress';
+let ALL=[],byId={},prog=JSON.parse(localStorage.getItem(KEY)||'{}'); // prog[id]={sel,ok}
+let queue=[],idx=0,timed=false,left=60,tick=null,draft={},paused=false;
+const $=s=>document.querySelector(s),save=()=>localStorage.setItem(KEY,JSON.stringify(prog));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const stats=()=>({done:Object.keys(prog).length,wrong:ALL.filter(q=>prog[q.id]&&!prog[q.id].ok).length,right:ALL.filter(q=>prog[q.id]?.ok).length});
+
+fetch('questions.json').then(r=>r.json()).then(d=>{ALL=d;d.forEach(q=>byId[q.id]=q);home()})
+ .catch(e=>$('#app').innerHTML='Could not load questions.json — run the server from this folder. '+e);
+
+function home(){
+ clearInterval(tick);const s=stats();
+ $('#app').innerHTML=`<div class="card"><h2>AI-901 Quiz</h2>
+ <p>${ALL.length} questions · answered ${s.done} · correct ${s.right} · wrong ${s.wrong}</p>
+ <label><input type="checkbox" id="timed"> Timed mode (1 min per question)</label><br><br>
+ <button class="primary" onclick="start('all')">All questions</button>
+ <button onclick="start('new')" ${ALL.length-s.done?'':'disabled'}>Unanswered (${ALL.length-s.done})</button>
+ <button onclick="start('wrong')" ${s.wrong?'':'disabled'}>Practice wrong only (${s.wrong})</button>
+ <button onclick="start('shuffle')">Shuffled</button>
+ <button onclick="reset()" style="float:right">Reset all</button></div>`;
+}
+function reset(){if(confirm('Clear all saved answers?')){prog={};save();home()}}
+function start(m){
+ timed=$('#timed').checked;
+ let l=ALL.map(q=>q.id);
+ if(m=='wrong')l=l.filter(i=>prog[i]&&!prog[i].ok);
+ if(m=='new')l=l.filter(i=>!prog[i]);
+ if(m=='shuffle')l.sort(()=>Math.random()-.5);
+ queue=l;idx=0;show();
+}
+function show(){
+ clearInterval(tick);paused=false;
+ const q=byId[queue[idx]],p=prog[q.id],done=!!p;
+ draft=done?JSON.parse(JSON.stringify(p.sel)):{};
+ const body=q.type=='matrix'
+  ? q.items.map((it,i)=>`<div class="item" id="it${i}">${esc(it.text)}<br><select onchange="draft[${i}]=this.value;clearInterval(tick)" ${done?'disabled':''}><option value="">— choose —</option>${it.options.map(o=>`<option ${draft[i]==o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`).join('')
+  : q.options.map(o=>`<label class="opt" id="o${o.key}"><input type="${q.type=='multi'?'checkbox':'radio'}" name="a" value="${o.key}" ${(draft.k||[]).includes(o.key)?'checked':''} ${done?'disabled':''} onchange="pick()"> <b>${o.key}.</b> ${esc(o.text)}</label>`).join('');
+ $('#app').innerHTML=`<div class="row"><button onclick="home()">Home</button><span>${idx+1} / ${queue.length} (Q${q.id})</span>${timed?'<span class="timer" id="t"></span>':''}</div>
+ <div class="bar"><i style="width:${(idx+1)/queue.length*100}%"></i></div><br>
+ <div class="card">${q.sus?`<p class="note">⚠ Possibly wrong in the source PDF: ${esc(q.sus)}</p>`:''}<p id="q">${esc(q.question)}</p>${q.type=='multi'?'<p><i>Select all that apply.</i></p>':''}${body}
+ <div id="fb"></div></div>
+ <div class="row"><button onclick="go(-1)" ${idx?'':'disabled'}>← Prev</button>
+ <button onclick="resetQ()">↺ Reset question</button>${timed&&!done?'<button id="pz" onclick="pause()">⏸ Pause</button>':''}
+ <button class="primary" id="chk" onclick="check()" ${done?'disabled':''}>Check answer</button>
+ <button onclick="go(1)" ${idx<queue.length-1?'':'disabled'}>Next →</button></div>`;
+ if(done)feedback(q,p.sel);
+ else if(timed){left=60;t();run()}
+ else if(timed===false){}
+}
+function run(){clearInterval(tick);tick=setInterval(()=>{left--;t();if(left<=0){clearInterval(tick);check(true)}},1000)}
+function pause(){paused=!paused;$('#pz').textContent=paused?'▶ Resume':'⏸ Pause';if(paused)clearInterval(tick);else if(!hasPick())run();document.querySelectorAll('#app .card input,#app .card select').forEach(e=>e.disabled=paused);$('#chk').disabled=paused}
+function hasPick(){return (draft.k||[]).length||Object.keys(draft).some(k=>k!=='k'&&draft[k])}
+function resetQ(){delete prog[queue[idx]];save();show()}
+function t(){const e=$('#t');if(e){e.textContent='⏱ '+left+'s';e.className='timer'+(left<=10?' low':'')}}
+function pick(){clearInterval(tick);draft.k=[...document.querySelectorAll('input[name=a]:checked')].map(e=>e.value)}
+function go(d){idx+=d;show()}
+function check(timeout){
+ const q=byId[queue[idx]];clearInterval(tick);
+ const sel=JSON.parse(JSON.stringify(draft));
+ let ok;
+ if(q.type=='matrix')ok=q.items.every((it,i)=>sel[i]===it.answer);
+ else{const a=[...q.answer].sort().join(),s=[...(sel.k||[])].sort().join();ok=a==s}
+ prog[q.id]={sel,ok};save();show();
+ if(timeout)$('#fb').insertAdjacentHTML('afterbegin','<p class="note">⏱ Time ran out.</p>');
+}
+function feedback(q,sel){
+ const ok=prog[q.id].ok;
+ if(q.type=='matrix')q.items.forEach((it,i)=>{const e=$('#it'+i);const good=sel[i]===it.answer;e.classList.add(good?'ok':'bad');if(!good)e.insertAdjacentHTML('beforeend',`<div>Correct: <b>${esc(it.answer)}</b></div>`)});
+ else q.options.forEach(o=>{const e=$('#o'+o.key);if(q.answer.includes(o.key))e.classList.add('ok');else if((sel.k||[]).includes(o.key))e.classList.add('bad')});
+ $('#fb').innerHTML=`<p><b>${ok?'✅ Correct':'❌ Wrong'}</b></p>`+(q.explanation?`<div class="expl">${esc(q.explanation)}</div>`:'')
+  +(q.docs_explanation?`<div class="expl"><b>From Microsoft docs:</b> ${esc(q.docs_explanation)}${q.docs_note?`<br><i>${esc(q.docs_note)}</i>`:''}${/^https:\/\//.test(q.docs_url||'')?`<br><a href="${esc(q.docs_url)}" target="_blank" rel="noopener">${esc(q.docs_url)}</a>`:''}</div>`:'');
+}
+document.addEventListener('keydown',e=>{if(!queue.length||!$('#chk'))return;if(e.key=='ArrowRight'&&idx<queue.length-1)go(1);if(e.key=='ArrowLeft'&&idx>0)go(-1)});
+</script></body></html>

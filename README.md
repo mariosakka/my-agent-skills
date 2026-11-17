@@ -56,6 +56,7 @@ gemini skills install $REPO --path plugins/general/skills/pr-inspect-and-act --c
 gemini skills install $REPO --path plugins/general/skills/report-to-pdf --consent
 gemini skills install $REPO --path plugins/general/skills/repo-foundations --consent
 gemini skills install $REPO --path plugins/general/skills/course-lab-workflow --consent
+gemini skills install $REPO --path plugins/general/skills/exam-quiz-site --consent
 ```
 
 Install only the skills you want. `--consent` skips the security confirmation prompt; drop it to review each one. Check the result with `gemini skills list`, and remove one with `gemini skills uninstall <name>`.
@@ -79,6 +80,7 @@ Notes:
 | [`report-to-pdf`](plugins/general/skills/report-to-pdf/SKILL.md) | Renders a Markdown report into a consistently styled PDF (title page, TOC, syntax-highlighted code, tables, SVG figures with captions, definition boxes, LaTeX or Unicode maths) |
 | [`repo-foundations`](plugins/general/skills/repo-foundations/SKILL.md) | Establishes project-specific structure, testing, CI, release, privacy, and workspace standards |
 | [`course-lab-workflow`](plugins/general/skills/course-lab-workflow/SKILL.md) | Creates, solves and documents course labs end to end: repository setup, shared code and executed notebooks, a Moodle-style submission and a cumulative course overview (replaces `lab-creation`) |
+| [`exam-quiz-site`](plugins/general/skills/exam-quiz-site/SKILL.md) | Builds a local quiz website (timed mode, prev/next, practice-wrong-only, reset) from an exam-dump PDF: parallel extraction agents, source and Microsoft-docs audits, doubtful-answer flags, plus a question-bank validator |
 
 The colete-online skills moved to the separate repo `mariosakka/colete-online-skills`.
 
